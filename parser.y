@@ -27,8 +27,9 @@
 %nonassoc ')'
 
 %%
+    identifier: ID;
 
-identifier: ID
+    expr: ID;
 
 %%
 
