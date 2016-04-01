@@ -3,6 +3,7 @@
 %top {
     #pragma warning(disable: 4996)
          #include <stdio.h>
+#include <stdlib.h>
 }
 
 %{
@@ -40,6 +41,14 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 
 <CHAR>"'"               { BEGIN(INITIAL); }
 <CHAR>.                 {}
+<STRING>"\\n"            { printf(" \n "); }
+<STRING>"\\r"            { printf(" \n "); }
+<STRING>"\\f"            { printf(" \n "); }
+<STRING>"\\b"            { printf(" \n "); }
+<STRING>"\\t"            { printf(" \t "); }
+<STRING>"\\\\"            { printf("\\ "); }
+<STRING>"\\\'"            { printf("\' "); }
+<STRING>"\\\""          { printf("\" "); }
 <STRING>"\""            { BEGIN(INITIAL); }
 <STRING>.               {}
 <MULT_STRING>"\"\"\""   { BEGIN(INITIAL); }
@@ -102,13 +111,15 @@ this                    { printf("THIS "); }
 lazy                    { printf("LAZY "); }
 new                     { printf("NEW "); }
 object                  { printf("OBJECT "); }
+"return"                { printf("RETURN "); }
 "\t"                    { printf("\t"); }
 
     /* ----------------------- cycle keywords -------------------------------- */
 
 while                   { printf("WHILE "); }
 for                     { printf("FOR "); }
-foreach                 { printf("FOREACH "); }
+until                   { printf("UNTIL "); }
+"<-"                    { printf("<- "); }
 to                      { printf("TO "); }
 case                    { printf("CASE "); }
 match                   { printf("MATCH "); }
@@ -121,20 +132,33 @@ else                    { printf("ELSE "); }
 "}"                     { printf("} "); }
 ":"                     { printf(": "); }
 ";"                     { printf("; "); }
-"="                     { printf("= "); }
-","                                         { printf(", "); }
-<INITIAL,s_STRING_INSIDE>"("                { printf("( "); }
-<INITIAL,s_STRING_INSIDE>")"                { printf(") "); }
-<INITIAL,s_STRING_INSIDE>"=="               { printf("== "); }
-<INITIAL,s_STRING_INSIDE>"+"                { printf("+ "); }
-<INITIAL,s_STRING_INSIDE>"-"                { printf("- "); }
-<INITIAL,s_STRING_INSIDE>"*"                { printf("* "); }
-<INITIAL,s_STRING_INSIDE>"/"                { printf("/ "); }
-<INITIAL,s_STRING_INSIDE>"%"                     { printf("% "); }
-<INITIAL,s_STRING_INSIDE>"&"                     { printf("& "); }
+","                     { printf(", "); }
+<INITIAL,s_STRING_INSIDE>"("                     { printf("( "); }
+<INITIAL,s_STRING_INSIDE>")"                     { printf(") "); }
+<INITIAL,s_STRING_INSIDE>"=="                    { printf("== "); }
+<INITIAL,s_STRING_INSIDE>"!="                    { printf("!= "); }
+<INITIAL,s_STRING_INSIDE>">="                    { printf(">= "); }
+<INITIAL,s_STRING_INSIDE>"<="                    { printf("<= "); }
+<INITIAL,s_STRING_INSIDE>"+="                    { printf("+= "); }
+<INITIAL,s_STRING_INSIDE>"-="                    { printf("-= "); }
+<INITIAL,s_STRING_INSIDE>"&="                    { printf("&= "); }
+<INITIAL,s_STRING_INSIDE>"|="                    { printf("|= "); }
+<INITIAL,s_STRING_INSIDE>"^="                    { printf("|= "); }
+<INITIAL,s_STRING_INSIDE>"*="                    { printf("*= "); }
+<INITIAL,s_STRING_INSIDE>"/="                    { printf("/= "); }
+<INITIAL,s_STRING_INSIDE>"%="                    { printf("\%= "); }
+<INITIAL,s_STRING_INSIDE>"="                     { printf("= "); }
+<INITIAL,s_STRING_INSIDE>"++"                    { printf("++ "); }
+<INITIAL,s_STRING_INSIDE>"--"                    { printf("-- "); }
+<INITIAL,s_STRING_INSIDE>"+"                     { printf("+ "); }
+<INITIAL,s_STRING_INSIDE>"-"                     { printf("- "); }
+<INITIAL,s_STRING_INSIDE>"*"                     { printf("* "); }
+<INITIAL,s_STRING_INSIDE>"/"                     { printf("/ "); }
+<INITIAL,s_STRING_INSIDE>"%"                     { printf("%% "); }
 <INITIAL,s_STRING_INSIDE>"&&"                    { printf("&& "); }
-<INITIAL,s_STRING_INSIDE>"|"                     { printf("| "); }
+<INITIAL,s_STRING_INSIDE>"&"                     { printf("& "); }
 <INITIAL,s_STRING_INSIDE>"||"                    { printf("|| "); }
+<INITIAL,s_STRING_INSIDE>"|"                     { printf("| "); }
 <INITIAL,s_STRING_INSIDE>">>>"                   { printf(">>> "); }
 <INITIAL,s_STRING_INSIDE>">>"                    { printf(">> "); }
 <INITIAL,s_STRING_INSIDE>">"                     { printf("> "); }
@@ -143,25 +167,17 @@ else                    { printf("ELSE "); }
 <INITIAL,s_STRING_INSIDE>"<"                     { printf("< "); }
 <INITIAL,s_STRING_INSIDE>"^"                     { printf("^ "); }
 <INITIAL,s_STRING_INSIDE>"."                     { printf(". "); }
-<INITIAL,s_STRING_INSIDE>">="                    { printf(">= "); }
-<INITIAL,s_STRING_INSIDE>"<="                    { printf("<= "); }
-<INITIAL,s_STRING_INSIDE>"+="                    { printf("+= "); }
-<INITIAL,s_STRING_INSIDE>"-="                    { printf("-= "); }
-<INITIAL,s_STRING_INSIDE>"*="                    { printf("*= "); }
-<INITIAL,s_STRING_INSIDE>"/="                    { printf("/= "); }
-<INITIAL,s_STRING_INSIDE>"++"                    { printf("++ "); }
-<INITIAL,s_STRING_INSIDE>"--"                    { printf("-- "); }
 
     /* ------------------------- declare ---------------------------------- */
 
 <INITIAL,s_STRING_INSIDE>println                { printf("PRINTFLN"); }
-<INITIAL,s_STRING_INSIDE>0x[1-9ABCDFE]+         { printf("HEX_LITERAL "); }
-<INITIAL,s_STRING_INSIDE>0[0-7]+                { printf("OCT_LITERAL "); }
-<INITIAL,s_STRING_INSIDE>([1-9][0-9]*)|0        { printf("INT_LITERAL "); }
+<INITIAL,s_STRING_INSIDE>0x[1-9ABCDFE]+         { printf("HEX_LITERAL: %f", atof(yytext));  }
+<INITIAL,s_STRING_INSIDE>0[0-7]+                { printf("OCT_LITERAL: %i ", strtol(yytext, NULL, 8)); }
+<INITIAL,s_STRING_INSIDE>([1-9][0-9]*)|0        { printf("INT_LITERAL: %d", atoi(yytext)); }
 <INITIAL,s_STRING_INSIDE>[1-9][0-9]*\.[0-9]*    { printf("NUMBER_FLOAT "); }
 <INITIAL,s_STRING_INSIDE>[1-9]e[0-9]*f          { printf("NUMBER_FLOAT "); }
 
 <INITIAL,s_STRING_INSIDE>{_id_}                 { printf("ID "); }
 
-<INITIAL,s_STRING_INSIDE>.                      { printf("unknown!!!"); }
+<INITIAL,s_STRING_INSIDE>.                       {}
 %%
