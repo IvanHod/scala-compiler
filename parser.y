@@ -18,18 +18,21 @@
 %token PRIVATE PROTECTED PUBLIC
 %token ARRAY
 %token NEW STATIC THIS LAZY OBJECT EXTENDS CLASS OVERRIDE
-%token WHILE FOR FOREACH TO CASE MATCH IF ELSE
+%token WHILE FOR TO CASE MATCH IF ELSE
 %token PRINTLN
 %token DEF VAL VAR
 %token<ch> ID
 
 %right '='
-%right PLUS_EQUAL MINUS_EQUAL MUL_EQUAL DIV_EQUAL DIV_WITH_REM_EQUAL AND_EQUAL OR_EQUAL LESS_EQUAL MORE_EQUAL IMP_EQUAL
+%left PLUS_EQUAL MINUS_EQUAL MUL_EQUAL DIV_EQUAL DIV_WITH_REM_EQUAL AND_EQUAL OR_EQUAL LESS_EQUAL MORE_EQUAL IMP_EQUAL
 %left '<' '>' LESS_THAN MORE_THAN LESS_EQ_THAN MORE_EQ_THAN
-%left '+' '-' EQUAL NOT_EQUAL '|' OR '^' '*' '/' '%' '&' AND
-%left INC DEC UMINUS
+%left AND OR '|' '^' '&' EQUAL NOT_EQUAL
+%left '+' '-' '*' '/' '%'
 %left '!'
-%nonassoc ')'
+%left UMINUS
+%right PREFIX_INC PREFIX_DEC
+%nonassoc '[' ']' '(' ')'
+%left POSTFIX_INC POSTFIX_DEC
 
 %start root
 
@@ -41,12 +44,8 @@
             | class_list class
             ;
 
-    class: OBJECT ID '{' stmt_list '}'
+    class: OBJECT ID stmt_list
             ;
-
-    expr_list: expr
-        | expr_list expr
-    ;
 
     expr: ID
           | CONST_INT
@@ -73,21 +72,36 @@
           | expr MORE_THAN expr
           | expr LESS_EQ_THAN expr
           | expr MORE_EQ_THAN expr
-          | DEC expr
-          | expr DEC
-          | INC expr
-          | expr INC
+          | PREFIX_DEC expr
+          | PREFIX_INC expr
+          | expr POSTFIX_DEC
+          | expr POSTFIX_INC
+          | ID  '(' expr_list ')'
           ;
+
+    expr_list:  simpl_stmt
+                | expr_list ',' simpl_stmt
+                ;
+
+    simpl_stmt : expr;
+
+    if_stmt: IF '(' simpl_stmt ')' '{' stmt_list '}'
+        | IF '(' simpl_stmt ')' simpl_stmt
+        | if_stmt ELSE IF '(' simpl_stmt ')' '{' stmt_list '}'
+        | if_stmt ELSE IF '(' simpl_stmt ')' simpl_stmt
+        | if_stmt  ELSE '{' stmt_list '}'
+        | if_stmt  ELSE simpl_stmt
+        ;
+
+    stmt: simpl_stmt
+        | if_stmt
+        | FOR '(' simpl_stmt TO simpl_stmt ')' '{' stmt_list '}'
+        | FOR '(' simpl_stmt TO simpl_stmt ')' simpl_stmt
+        ;
 
     stmt_list: stmt
         | stmt_list stmt
     ;
-
-    stmt: expr ';'
-        | '{' stmt '}'
-        | IF '(' expr_list ')' stmt_list ';'
-        | IF '(' expr ')'
-        ;
 
 %%
 
