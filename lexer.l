@@ -2,8 +2,8 @@
 
 %top {
     #pragma warning(disable: 4996)
-         #include <stdio.h>
-#include <stdlib.h>
+    #include <stdio.h>
+    #include <stdlib.h>
 }
 
 %{
@@ -15,7 +15,7 @@
 %x STRING
 %x MULT_STRING
 %x s_STRING
-%x s_STRING_INSIDE
+%x s_STRING
 %x f_STRING
 
 _id_ [A-Za-z_][A-Za-z_0-9]*
@@ -41,13 +41,13 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 
 <CHAR>"'"               { BEGIN(INITIAL); }
 <CHAR>.                 {}
-<STRING>"\\n"            { printf(" \n "); }
-<STRING>"\\r"            { printf(" \n "); }
-<STRING>"\\f"            { printf(" \n "); }
-<STRING>"\\b"            { printf(" \n "); }
-<STRING>"\\t"            { printf(" \t "); }
-<STRING>"\\\\"            { printf("\\ "); }
-<STRING>"\\\'"            { printf("\' "); }
+<STRING>"\\n"           { printf(" \n "); }
+<STRING>"\\f"           { printf(" \n "); }
+<STRING>"\\r"           { printf(" \n "); }
+<STRING>"\\b"           { printf(" \n "); }
+<STRING>"\\t"           { printf(" \t "); }
+<STRING>"\\\\"          { printf("\\ "); }
+<STRING>"\\\'"          { printf("\' "); }
 <STRING>"\\\""          { printf("\" "); }
 <STRING>"\""            { BEGIN(INITIAL); }
 <STRING>.               {}
@@ -59,11 +59,11 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 "s\""                   { BEGIN(s_STRING); printf("s\" "); }
 
 <s_STRING>\${_id_}      { printf("ID "); }
-<s_STRING>\$\{          { BEGIN( s_STRING_INSIDE ); printf("${ "); }
-<s_STRING>\"            { BEGIN(INITIAL); printf("\""); }
+<s_STRING>\$\{          { BEGIN( s_STRING ); printf("${ "); }
+<s_STRING>"\""          { BEGIN(INITIAL); printf("\""); }
 <s_STRING>.             {}
 
-<s_STRING_INSIDE>"}"     { BEGIN( s_STRING ); printf("} "); }
+<s_STRING>"}"           { BEGIN( s_STRING ); printf("} "); }
 
     /* ------------------------ f_STRING rules --------------------------------- */
 
@@ -71,7 +71,7 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 
 <f_STRING>\${_id_}      { printf("ID "); }
 <f_STRING>%s            { printf("%s "); }
-<f_STRING>%.f|d            { printf("%s "); }
+<f_STRING>%.f|d         { printf("%s "); }
 
 
 
@@ -84,16 +84,16 @@ Array                   { printf("ARRAY"); }
     /* ------------------------ keyword from "system" unit -------------------- */
 
 def                     { printf("DEF "); }
-class                   { printf("CLASS "); }
+"class"                 { printf("CLASS "); }
 override                { printf("OVERRIDE "); }
 
     /* ------------------------ constants and variables ----------------------- */
 
 val                     { printf("VAL "); }
 var                     { printf("VAR "); }
-<INITIAL,s_STRING_INSIDE>true                    { printf("TRUE "); }
-<INITIAL,s_STRING_INSIDE>false                   { printf("FALSE "); }
-<INITIAL,s_STRING_INSIDE>Null                    { printf("NULL "); }
+<INITIAL,s_STRING>true  { printf("TRUE "); }
+<INITIAL,s_STRING>false { printf("FALSE "); }
+<INITIAL,s_STRING>Null  { printf("NULL "); }
 
     /* ----------------------- general keywords ------------------------------- */
 
@@ -107,12 +107,14 @@ private                 { printf("PRIVATE "); }
 protected               { printf("PROTECTED "); }
 extends                 { printf("EXTENDS "); }
 static                  { printf("STATIC "); }
+import                  { printf("IMPORT"); }
 this                    { printf("THIS "); }
 lazy                    { printf("LAZY "); }
 new                     { printf("NEW "); }
 object                  { printf("OBJECT "); }
 "return"                { printf("RETURN "); }
 "\t"                    { printf("\t"); }
+"\n"                    { printf(";"); }
 
     /* ----------------------- cycle keywords -------------------------------- */
 
@@ -133,51 +135,51 @@ else                    { printf("ELSE "); }
 ":"                     { printf(": "); }
 ";"                     { printf("; "); }
 ","                     { printf(", "); }
-<INITIAL,s_STRING_INSIDE>"("                     { printf("( "); }
-<INITIAL,s_STRING_INSIDE>")"                     { printf(") "); }
-<INITIAL,s_STRING_INSIDE>"=="                    { printf("== "); }
-<INITIAL,s_STRING_INSIDE>"!="                    { printf("!= "); }
-<INITIAL,s_STRING_INSIDE>">="                    { printf(">= "); }
-<INITIAL,s_STRING_INSIDE>"<="                    { printf("<= "); }
-<INITIAL,s_STRING_INSIDE>"+="                    { printf("+= "); }
-<INITIAL,s_STRING_INSIDE>"-="                    { printf("-= "); }
-<INITIAL,s_STRING_INSIDE>"&="                    { printf("&= "); }
-<INITIAL,s_STRING_INSIDE>"|="                    { printf("|= "); }
-<INITIAL,s_STRING_INSIDE>"^="                    { printf("|= "); }
-<INITIAL,s_STRING_INSIDE>"*="                    { printf("*= "); }
-<INITIAL,s_STRING_INSIDE>"/="                    { printf("/= "); }
-<INITIAL,s_STRING_INSIDE>"%="                    { printf("\%= "); }
-<INITIAL,s_STRING_INSIDE>"="                     { printf("= "); }
-<INITIAL,s_STRING_INSIDE>"++"                    { printf("++ "); }
-<INITIAL,s_STRING_INSIDE>"--"                    { printf("-- "); }
-<INITIAL,s_STRING_INSIDE>"+"                     { printf("+ "); }
-<INITIAL,s_STRING_INSIDE>"-"                     { printf("- "); }
-<INITIAL,s_STRING_INSIDE>"*"                     { printf("* "); }
-<INITIAL,s_STRING_INSIDE>"/"                     { printf("/ "); }
-<INITIAL,s_STRING_INSIDE>"%"                     { printf("%% "); }
-<INITIAL,s_STRING_INSIDE>"&&"                    { printf("&& "); }
-<INITIAL,s_STRING_INSIDE>"&"                     { printf("& "); }
-<INITIAL,s_STRING_INSIDE>"||"                    { printf("|| "); }
-<INITIAL,s_STRING_INSIDE>"|"                     { printf("| "); }
-<INITIAL,s_STRING_INSIDE>">>>"                   { printf(">>> "); }
-<INITIAL,s_STRING_INSIDE>">>"                    { printf(">> "); }
-<INITIAL,s_STRING_INSIDE>">"                     { printf("> "); }
-<INITIAL,s_STRING_INSIDE>"<<<"                   { printf("<<< "); }
-<INITIAL,s_STRING_INSIDE>"<<"                    { printf("<< "); }
-<INITIAL,s_STRING_INSIDE>"<"                     { printf("< "); }
-<INITIAL,s_STRING_INSIDE>"^"                     { printf("^ "); }
-<INITIAL,s_STRING_INSIDE>"."                     { printf(". "); }
+<INITIAL,s_STRING>"("   { printf("( "); }
+<INITIAL,s_STRING>")"   { printf(") "); }
+<INITIAL,s_STRING>"=="  { printf("== "); }
+<INITIAL,s_STRING>"!="  { printf("!= "); }
+<INITIAL,s_STRING>">="  { printf(">= "); }
+<INITIAL,s_STRING>"<="  { printf("<= "); }
+<INITIAL,s_STRING>"+="  { printf("+= "); }
+<INITIAL,s_STRING>"-="  { printf("-= "); }
+<INITIAL,s_STRING>"&="  { printf("&= "); }
+<INITIAL,s_STRING>"|="  { printf("|= "); }
+<INITIAL,s_STRING>"^="  { printf("|= "); }
+<INITIAL,s_STRING>"*="  { printf("*= "); }
+<INITIAL,s_STRING>"/="  { printf("/= "); }
+<INITIAL,s_STRING>"%="  { printf("\%= "); }
+<INITIAL,s_STRING>"="   { printf("= "); }
+<INITIAL,s_STRING>"++"  { printf("++ "); }
+<INITIAL,s_STRING>"--"  { printf("-- "); }
+<INITIAL,s_STRING>"+"   { printf("+ "); }
+<INITIAL,s_STRING>"-"   { printf("- "); }
+<INITIAL,s_STRING>"*"   { printf("* "); }
+<INITIAL,s_STRING>"/"   { printf("/ "); }
+<INITIAL,s_STRING>"%"   { printf("%% "); }
+<INITIAL,s_STRING>"&&"  { printf("&& "); }
+<INITIAL,s_STRING>"&"   { printf("& "); }
+<INITIAL,s_STRING>"||"  { printf("|| "); }
+<INITIAL,s_STRING>"|"   { printf("| "); }
+<INITIAL,s_STRING>">>>" { printf(">>> "); }
+<INITIAL,s_STRING>">>"  { printf(">> "); }
+<INITIAL,s_STRING>">"   { printf("> "); }
+<INITIAL,s_STRING>"<<<" { printf("<<< "); }
+<INITIAL,s_STRING>"<<"  { printf("<< "); }
+<INITIAL,s_STRING>"<"   { printf("< "); }
+<INITIAL,s_STRING>"^"   { printf("^ "); }
+<INITIAL,s_STRING>"."   { printf(". "); }
 
     /* ------------------------- declare ---------------------------------- */
 
-<INITIAL,s_STRING_INSIDE>println                { printf("PRINTFLN"); }
-<INITIAL,s_STRING_INSIDE>0x[1-9ABCDFE]+         { printf("HEX_LITERAL: %f", atof(yytext));  }
-<INITIAL,s_STRING_INSIDE>0[0-7]+                { printf("OCT_LITERAL: %i ", strtol(yytext, NULL, 8)); }
-<INITIAL,s_STRING_INSIDE>([1-9][0-9]*)|0        { printf("INT_LITERAL: %d", atoi(yytext)); }
-<INITIAL,s_STRING_INSIDE>[1-9][0-9]*\.[0-9]*    { printf("NUMBER_FLOAT "); }
-<INITIAL,s_STRING_INSIDE>[1-9]e[0-9]*f          { printf("NUMBER_FLOAT "); }
+<INITIAL,s_STRING>println                { printf("PRINTFLN"); }
+<INITIAL,s_STRING>0x[1-9ABCDFE]+         { printf("HEX_LITERAL: %f", atof(yytext));  }
+<INITIAL,s_STRING>0[0-7]+                { printf("OCT_LITERAL: %i ", strtol(yytext, NULL, 8)); }
+<INITIAL,s_STRING>([1-9][0-9]*)|0        { printf("INT_LITERAL: %d", atoi(yytext)); }
+<INITIAL,s_STRING>[1-9][0-9]*\.[0-9]*    { printf("NUMBER_FLOAT "); }
+<INITIAL,s_STRING>[1-9]e[0-9]*f          { printf("NUMBER_FLOAT "); }
 
-<INITIAL,s_STRING_INSIDE>{_id_}                 { printf("ID "); }
+<INITIAL,s_STRING>{_id_}                 { printf("ID "); }
 
-<INITIAL,s_STRING_INSIDE>.                       {}
+<INITIAL,s_STRING>.                       {}
 %%
