@@ -10,105 +10,123 @@
 
 %union {
         int int_const;
+        float float_const;
         char* string;
+        int boolean;
+        struct Expression *expr;
     };
 
 %type <root>root
+%type <expr>expr
 
-%token CONST_INT CONST_FLOAT CONST_DOUBLE CONST_STR TRUE FALSE
+%token<int> CONST_INT
+%token<float> CONST_FLOAT CONST_DOUBLE
+%token<string> CONST_STR
+%token<boolean> TRUE FALSE
 %token NULL_EXPR
 %token PRIVATE PROTECTED PUBLIC
 %token ARRAY
 %token NEW STATIC THIS LAZY OBJECT EXTENDS CLASS OVERRIDE
-%token WHILE FOR TO CASE MATCH IF ELSE
+%token WHILE FOR TO CASE MATCH IF ELSE LEFT_ARROW
 %token PRINTLN
 %token DEF VAL VAR
-%token<ch> ID
+%token<string> ID
+%token PRINTFLN
 
 %right '='
 %left PLUS_EQUAL MINUS_EQUAL MUL_EQUAL DIV_EQUAL DIV_WITH_REM_EQUAL AND_EQUAL OR_EQUAL
 %left '<' '>' LESS_THAN MORE_THAN LESS_EQ_THAN MORE_EQ_THAN
-%left AND OR '|' '^' '&' EQUAL NOT_EQUAL
-%left '+' '-' '*' '/' '%'
+%left AND
+%left OR
+%left '|'
+%left'^'
+%left'&'
+%left EQUAL NOT_EQUAL
+%left '+' '-'
+%left '*' '/' '%'
 %left '!'
 %left UMINUS
 %right PREFIX_INC PREFIX_DEC
 %nonassoc '[' ']' ')'
 %left POSTFIX_INC POSTFIX_DEC
+%left '.'
 
 %start root
 
 %%
-    root: OBJECT ID '(' stmt_list ')' { $$ = root = CreateProgramm(); }
-          ;
+    root: OBJECT ID '(' stmt_list ')' { $$ = root = CreateProgramm( ); }
+        ;
 
     class: ID '(' func_args ')' '{' stmt_list '}'
             ;
 
-    expr: ID
-        | CONST_INT
-        | CONST_FLOAT
-        | CONST_DOUBLE
-        | CONST_STR
-        | TRUE
-        | FALSE
-        | NULL_EXPR
-        | expr '=' expr
-        | expr PLUS_EQUAL expr
-        | expr MINUS_EQUAL expr
-        | expr MUL_EQUAL expr
-        | expr DIV_EQUAL expr
-        | expr DIV_WITH_REM_EQUAL expr
-        | expr AND_EQUAL expr
-        | expr OR_EQUAL expr
-        | expr '+' expr
-        | expr '-' expr
-        | expr '*' expr
-        | expr '/' expr
-        | expr '^' expr
-        | expr '%' expr
-        | expr '&' expr
-        | expr AND expr
-        | expr '|' expr
-        | expr OR expr
-        | expr EQUAL expr
-        | expr NOT_EQUAL
-        | expr LESS_THAN expr
-        | expr MORE_THAN expr
-        | expr LESS_EQ_THAN expr
-        | expr MORE_EQ_THAN expr
-        | PREFIX_DEC expr
-        | PREFIX_INC expr
-        | expr POSTFIX_DEC
-        | expr POSTFIX_INC
-        | ID  '(' expr_list ')'
+    expr: ID                            { $$ = CreateExprID( $1 ); }
+        | CONST_INT                     { $$ = CreateExprINT($1); }
+        | CONST_FLOAT                   { $$ = CreateExprFLOAT($1); }
+        | CONST_DOUBLE                  { $$ = CreateExprFLOAT($1); }
+        | CONST_STR                     { $$ = CreateExprSTR($1); }
+        | TRUE                          { $$ = CreateExprBOOLEAN($1); }
+        | FALSE                         { $$ = CreateExprBOOLEAN($1); }
+        | NULL_EXPR                     { $$ = CreateExprNULL(); }
+        | expr PLUS_EQUAL expr          { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr MINUS_EQUAL expr         { $$ = CreateExprOperation( $1, expr_type.minus_eq, $3); }
+        | expr MUL_EQUAL expr           { $$ = CreateExprOperation( $1, expr_type.mul_eq, $3); }
+        | expr DIV_EQUAL expr           { $$ = CreateExprOperation( $1, expr_type.div_eq, $3); }
+        | expr DIV_WITH_REM_EQUAL expr  { $$ = CreateExprOperation( $1, expr_type.div_rem_eq, $3); }
+        | expr AND_EQUAL expr           { $$ = CreateExprOperation( $1, expr_type.and_eq, $3); }
+        | expr OR_EQUAL expr            { $$ = CreateExprOperation( $1, expr_type.or_eq, $3); }
+        | expr '=' expr                 { $$ = CreateExprOperation( $1, expr_type.assigment, $3); }
+        | expr '.' expr                 { $$ = CreateExprOperation( $1, expr_type.assigment, $3); }
+        | expr '+' expr                 { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | '-' expr %prec UMINUS         { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr '-' expr                 { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr '*' expr                 { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr '/' expr                 { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr '^' expr                 { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr '%' expr                 { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr '&' expr                 { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr AND expr                 { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr '|' expr                 { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr OR expr                  { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr EQUAL expr               { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr NOT_EQUAL                { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr LESS_THAN expr           { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr MORE_THAN expr           { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr LESS_EQ_THAN expr        { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr MORE_EQ_THAN expr        { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | PREFIX_DEC expr               { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | PREFIX_INC expr               { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr POSTFIX_DEC              { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | expr POSTFIX_INC              { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | ID '(' ')'                    { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | ID '(' expr_list ')'          { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | PRINTFLN '(' expr ')'         { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | PRINTFLN '(' 'g' expr ')'     { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
+        | PRINTFLN '(' 'f' expr ')'     { $$ = CreateExprOperation( $1, expr_type.plus_eq, $3); }
         ;
 
     expr_list:  expr
-                | expr_list ',' expr
-                ;
-
-    simpl_stmt : expr;
-
-    if_stmt: IF '(' expr ')' '{' stmt_list '}'
-        | IF '(' expr ')' simpl_stmt
-        | if_stmt ELSE IF '(' expr ')' '{' stmt_list '}'
-        | if_stmt ELSE IF '(' expr ')' simpl_stmt
-        | if_stmt  ELSE '{' stmt_list '}'
-        | if_stmt  ELSE simpl_stmt
+        | expr_list ',' expr
         ;
 
-    stmt: expr ';'
+    if_stmt: IF '(' expr ')' stmt
+        | IF '(' expr ')' stmt ELSE stmt
+        ;
+
+    if_loop_expr: IF expr
+        ;
+
+    if_loop_expr_list: if_loop_expr
+        | if_loop_expr_list ';' if_loop_expr
+        ;
+
+    stmt: expr_list ';'
+        | '{' stmt_list '}'
         | if_stmt
-        | FOR '(' expr TO expr ')' '{' stmt_list '}'
-        | FOR '(' expr TO expr ')' stmt
-        | FOR '(' expr TO '(' expr ',' expr ')' ')' '{' stmt_list '}'
-        | FOR '(' expr TO '(' expr ',' expr ')' ')' stmt
-        | WHILE '(' expr_list ')' '{' stmt_list '}'
+        | FOR '(' expr LEFT_ARROW expr if_loop_expr_list ')' stmt
         | WHILE '(' expr_list ')' stmt
         | DEF ID '(' func_args ')' stmt
         | DEF ID '(' func_args ')' ':' ID '=' stmt
-        | DEF ID '(' func_args ')' '{' stmt_list '}'
         | decl_var
         | decl_val
         | class
@@ -116,7 +134,7 @@
 
     stmt_list: stmt
         | stmt_list stmt
-    ;
+        ;
 
     func_args: ID ':' expr
         | func_args ',' ID ':' expr
@@ -127,7 +145,7 @@
         | VAR ids_list ':' ID '=' expr ';'
         | VAR ids_list '=' NEW ARRAY '[' ID ']' '(' expr ')'
         | VAR ids_list '=' ARRAY '(' expr_list ')'
-    ;
+        ;
 
     decl_val: VAL ID ';'
         | VAL ids_list ';'

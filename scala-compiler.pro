@@ -9,7 +9,9 @@ SOURCES += main.c \
 
 HEADERS += \
     lexer.h \
-    bison.h
+    bison.h \
+    structs.h \
+    func.h
 
 DISTFILES += \
     parser.y \

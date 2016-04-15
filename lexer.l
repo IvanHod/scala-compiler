@@ -4,6 +4,7 @@
     #pragma warning(disable: 4996)
     #include <stdio.h>
     #include <stdlib.h>
+    #include "bison.h"
 }
 
 %{
@@ -14,7 +15,6 @@
 %x CHAR
 %x STRING
 %x MULT_STRING
-%x s_STRING
 %x s_STRING
 %x f_STRING
 
@@ -77,102 +77,91 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 
     /* ------------------------ array initialize --------------------------------*/
 
-Array                   { printf("ARRAY"); }
-"["                     { printf("[ "); }
-"]"                     { printf("] "); }
+"Array"                 { return ARRAY; }
+"["                     { return '['; }
+"]"                     { return ']'; }
 
     /* ------------------------ keyword from "system" unit -------------------- */
 
-def                     { printf("DEF "); }
-"class"                 { printf("CLASS "); }
-override                { printf("OVERRIDE "); }
+def                     { return DEF; }
+"class"                 { return CLASS; }
+override                { return OVERRIDE; }
 
     /* ------------------------ constants and variables ----------------------- */
 
-val                     { printf("VAL "); }
-var                     { printf("VAR "); }
-<INITIAL,s_STRING>true  { printf("TRUE "); }
-<INITIAL,s_STRING>false { printf("FALSE "); }
-<INITIAL,s_STRING>Null  { printf("NULL "); }
+val                     { return VAL; }
+var                     { return VAR; }
+<INITIAL,s_STRING>true  { return TRUE; }
+<INITIAL,s_STRING>false { return FALSE; }
+<INITIAL,s_STRING>Null  { return NULL_EXPR; }
 
     /* ----------------------- general keywords ------------------------------- */
 
-Nothing                 { printf("NOTHING "); }
-Any                     { printf("ANY "); }
-AnyRef                  { printf("ANYREF "); }
-Unit                    { printf("UNIT "); }
-super                   { printf("SUPER "); }
-public                  { printf("PUBLIC "); }
-private                 { printf("PRIVATE "); }
-protected               { printf("PROTECTED "); }
-extends                 { printf("EXTENDS "); }
-static                  { printf("STATIC "); }
-import                  { printf("IMPORT"); }
-this                    { printf("THIS "); }
-lazy                    { printf("LAZY "); }
-new                     { printf("NEW "); }
-object                  { printf("OBJECT "); }
-"return"                { printf("RETURN "); }
+public                  { return PUBLIC; }
+private                 { return PRIVATE; }
+protected               { return PROTECTED; }
+static                  { return STATIC; }
+import                  { return IMPORT; }
+this                    { return THIS; }
+lazy                    { return LAZY; }
+new                     { return NEW; }
+object                  { return OBJECT; }
+"return"                { return RETURN; }
 "\t"                    { printf("\t"); }
 "\n"                    { printf(";"); }
 
     /* ----------------------- cycle keywords -------------------------------- */
 
-while                   { printf("WHILE "); }
-for                     { printf("FOR "); }
-until                   { printf("UNTIL "); }
-"<-"                    { printf("<- "); }
-to                      { printf("TO "); }
-case                    { printf("CASE "); }
-match                   { printf("MATCH "); }
-if                      { printf("IF "); }
-else                    { printf("ELSE "); }
+while                   { return WHILE; }
+for                     { return FOR; }
+until                   { return UNTIL; }
+"<-"                    { return LEFT_ARROW; }
+to                      { return TO; }
+case                    { return CASE; }
+match                   { return MATCH; }
+if                      { return IF; }
+else                    { return ELSE; }
 
     /* ----------------------- signs & operators ----------------------------- */
 
-"{"                     { printf("{ "); }
-"}"                     { printf("} "); }
-":"                     { printf(": "); }
-";"                     { printf("; "); }
-","                     { printf(", "); }
-<INITIAL,s_STRING>"("   { printf("( "); }
-<INITIAL,s_STRING>")"   { printf(") "); }
-<INITIAL,s_STRING>"=="  { printf("== "); }
-<INITIAL,s_STRING>"!="  { printf("!= "); }
-<INITIAL,s_STRING>">="  { printf(">= "); }
-<INITIAL,s_STRING>"<="  { printf("<= "); }
-<INITIAL,s_STRING>"+="  { printf("+= "); }
-<INITIAL,s_STRING>"-="  { printf("-= "); }
-<INITIAL,s_STRING>"&="  { printf("&= "); }
-<INITIAL,s_STRING>"|="  { printf("|= "); }
-<INITIAL,s_STRING>"^="  { printf("|= "); }
-<INITIAL,s_STRING>"*="  { printf("*= "); }
-<INITIAL,s_STRING>"/="  { printf("/= "); }
-<INITIAL,s_STRING>"%="  { printf("\%= "); }
-<INITIAL,s_STRING>"="   { printf("= "); }
-<INITIAL,s_STRING>"++"  { printf("++ "); }
-<INITIAL,s_STRING>"--"  { printf("-- "); }
-<INITIAL,s_STRING>"+"   { printf("+ "); }
-<INITIAL,s_STRING>"-"   { printf("- "); }
-<INITIAL,s_STRING>"*"   { printf("* "); }
-<INITIAL,s_STRING>"/"   { printf("/ "); }
-<INITIAL,s_STRING>"%"   { printf("%% "); }
-<INITIAL,s_STRING>"&&"  { printf("&& "); }
-<INITIAL,s_STRING>"&"   { printf("& "); }
-<INITIAL,s_STRING>"||"  { printf("|| "); }
-<INITIAL,s_STRING>"|"   { printf("| "); }
-<INITIAL,s_STRING>">>>" { printf(">>> "); }
-<INITIAL,s_STRING>">>"  { printf(">> "); }
-<INITIAL,s_STRING>">"   { printf("> "); }
-<INITIAL,s_STRING>"<<<" { printf("<<< "); }
-<INITIAL,s_STRING>"<<"  { printf("<< "); }
-<INITIAL,s_STRING>"<"   { printf("< "); }
-<INITIAL,s_STRING>"^"   { printf("^ "); }
-<INITIAL,s_STRING>"."   { printf(". "); }
+"{"                     { return '{'; }
+"}"                     { return '}'; }
+":"                     { return ':'; }
+";"                     { return ';'; }
+","                     { return ','; }
+<INITIAL,s_STRING>"("   { return '('; }
+<INITIAL,s_STRING>")"   { return ')'; }
+<INITIAL,s_STRING>"=="  { return EQUAL; }
+<INITIAL,s_STRING>"!="  { return NOT_EQUAL; }
+<INITIAL,s_STRING>">="  { return MORE_EQ_THAN; }
+<INITIAL,s_STRING>"<="  { return LESS_EQ_THAN; }
+<INITIAL,s_STRING>"+="  { return PLUS_EQUAL; }
+<INITIAL,s_STRING>"-="  { return MINUS_EQUAL; }
+<INITIAL,s_STRING>"&="  { return AND_EQUAL; }
+<INITIAL,s_STRING>"|="  { return OR_EQUAL; }
+<INITIAL,s_STRING>"*="  { return MUL_EQUAL; }
+<INITIAL,s_STRING>"/="  { return DIV_EQUAL; }
+<INITIAL,s_STRING>"%="  { return DIV_WITH_REM_EQUAL; }
+<INITIAL,s_STRING>"="   { return '='; }
+<INITIAL,s_STRING>"++"  { return PREFIX_INC; }
+<INITIAL,s_STRING>"--"  { return PREFIX_DEC; }
+<INITIAL,s_STRING>"+"   { return '+'; }
+<INITIAL,s_STRING>"-"   { return '-'; }
+<INITIAL,s_STRING>"*"   { return '*'; }
+<INITIAL,s_STRING>"/"   { return '/'; }
+<INITIAL,s_STRING>"%"   { return '%'; }
+<INITIAL,s_STRING>"&&"  { return AND; }
+<INITIAL,s_STRING>"&"   { return '&'; }
+<INITIAL,s_STRING>"||"  { return OR; }
+<INITIAL,s_STRING>"|"   { return '|'; }
+<INITIAL,s_STRING>">"   { return '>'; }
+<INITIAL,s_STRING>"<"   { return '<'; }
+<INITIAL,s_STRING>"^"   { return '^'; }
+<INITIAL,s_STRING>"."   { return '.'; }
 
     /* ------------------------- declare ---------------------------------- */
 
-<INITIAL,s_STRING>println                { printf("PRINTFLN"); }
+<INITIAL,s_STRING>println                { return PRINTFLN; }
 <INITIAL,s_STRING>0x[1-9ABCDFE]+         { printf("HEX_LITERAL: %f", atof(yytext));  }
 <INITIAL,s_STRING>0[0-7]+                { printf("OCT_LITERAL: %i ", strtol(yytext, NULL, 8)); }
 <INITIAL,s_STRING>([1-9][0-9]*)|0        { printf("INT_LITERAL: %d", atoi(yytext)); }
@@ -181,5 +170,5 @@ else                    { printf("ELSE "); }
 
 <INITIAL,s_STRING>{_id_}                 { printf("ID "); }
 
-<INITIAL,s_STRING>.                       {}
+<INITIAL,s_STRING>.                      {}
 %%
