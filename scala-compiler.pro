@@ -5,7 +5,7 @@ CONFIG -= qt
 
 SOURCES += main.c \
     lex.yy.c \
-    y.tab.c
+    parser.tab.c
 
 HEADERS += \
     lexer.h \

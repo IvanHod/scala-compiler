@@ -5,6 +5,7 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include "bison.h"
+    extern int yyparse(void);
 }
 
 %{
@@ -61,9 +62,9 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 <s_STRING>\${_id_}      { printf("ID "); }
 <s_STRING>\$\{          { BEGIN( s_STRING ); printf("${ "); }
 <s_STRING>"\""          { BEGIN(INITIAL); printf("\""); }
-<s_STRING>.             {}
 
 <s_STRING>"}"           { BEGIN( s_STRING ); printf("} "); }
+<s_STRING>.             {}
 
     /* ------------------------ f_STRING rules --------------------------------- */
 
@@ -101,7 +102,6 @@ public                  { return PUBLIC; }
 private                 { return PRIVATE; }
 protected               { return PROTECTED; }
 static                  { return STATIC; }
-import                  { return IMPORT; }
 this                    { return THIS; }
 lazy                    { return LAZY; }
 new                     { return NEW; }
@@ -114,7 +114,6 @@ object                  { return OBJECT; }
 
 while                   { return WHILE; }
 for                     { return FOR; }
-until                   { return UNTIL; }
 "<-"                    { return LEFT_ARROW; }
 to                      { return TO; }
 case                    { return CASE; }

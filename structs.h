@@ -1,9 +1,9 @@
-#ifndef STRUCTS
-#define STRUCTS
+//#ifndef STRUCTS
+//#define STRUCTS
 
 struct Root *root;
 
-enum expr_type {
+enum _expr_type{
     ID,
     assigment,
     equal,
@@ -21,7 +21,7 @@ enum expr_type {
     mul,
     mul_eq,
     div,
-    div_eq,
+    div_residue,
     unarOR,
     OR,
     unarXOR,
@@ -37,10 +37,10 @@ enum expr_type {
 
 struct expression {
     enum expr_type type;
-    expression *left;
-    expression *rigth;
-    expression *next;
-    bool boolean;
+    struct expression *left;
+    struct expression *rigth;
+    struct expression *next;
+    //bool boolean;
     int Conts_int;
     float Const_float;
     char Char;
@@ -80,6 +80,10 @@ struct nif {
     struct statement *to_else;
 };
 
+struct nif_loop {
+
+};
+
 enum for_type {
     general,
     foreach
@@ -87,6 +91,10 @@ enum for_type {
 
 struct nfor {
     enum for_type type;
+
+};
+
+struct nargs {
 
 };
 
@@ -107,5 +115,9 @@ struct nfunc {
 };
 
 struct nclass {
+
+};
+
+struct ids_list {
 
 };

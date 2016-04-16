@@ -1,11 +1,12 @@
 #include "structs.h"
 
-struct Root CreateProgramm() {
-
+struct Root* CreateProgramm(char* id, struct statement_list *stmt_list) {
+    struct Root *node = (struct Root *)malloc(sizeof(struct Root));
+    return node;
 }
 
-struct Expression *createExprID(const char* name) {
-    struct Expression *node = (struct Expression *)malloc(sizeof(struct Expression));
+struct expression *createExprID(const char* name) {
+    struct expression *node = (struct expression *)malloc(sizeof(struct expression));
     node->String = name;
     node->type = expr_type.ID;
     crt->left = NULL;
@@ -14,38 +15,52 @@ struct Expression *createExprID(const char* name) {
     return node;
 }
 
-struct Expression *createExprInt(int val ) {
-    struct Expression *node = (struct Expression *)malloc(sizeof(struct Expression));
+struct expression *CreateExprINT(int val ) {
+    struct expression *node = (struct expression *)malloc(sizeof(struct expression));
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
     node->Conts_int = val;
     node->type = expr_type.ID;
+    return node;
 }
 
-struct Expression *createExprFLOAT(float val ) {
-    struct Expression *node = (struct Expression *)malloc(sizeof(struct Expression));
+struct expression *CreateExprFLOAT(float val ) {
+    struct expression *node = (struct expression *)malloc(sizeof(struct expression));
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
     node->Conts_float = val;
     node->type = expr_type.ID;
+    return node;
 }
 
-struct Expression *createExprSTR(char* val ) {
-    struct Expression *node = (struct Expression *)malloc(sizeof(struct Expression));
+struct expression *CreateExprSTR(char* val ) {
+    struct expression *node = (struct expression *)malloc(sizeof(struct expression));
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
     node->String = val;
     node->type = expr_type.ID;
+    return node;
 }
 
-struct Expression *createExprBOOLEAN(bool val ) {
-    struct Expression *node = (struct Expression *)malloc(sizeof(struct Expression));
+struct expression *createExprBOOLEAN(bool val ) {
+    struct expression *node = (struct expression *)malloc(sizeof(struct expression));
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
     node->boolean = val;
     node->type = expr_type.ID;
+    return node;
+}
+
+struct expression *CreateExprNULL() {
+    struct expression *node = (struct expression *)malloc(sizeof(struct expression));
+    return node;
+}
+
+struct expression *CreateExprOperation(struct expression* expr_1, enum expr_type, struct expression* expr_1 ) {
+    struct expression *node = (struct expression *)malloc(sizeof(struct expression));
+    return node;
 }
