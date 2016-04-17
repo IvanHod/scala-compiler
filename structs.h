@@ -1,10 +1,14 @@
-//#ifndef STRUCTS
-//#define STRUCTS
+#ifndef STRUCTS
+#define STRUCTS
 
 struct Root *root;
 
-enum _expr_type{
-    ID,
+enum expr_type{
+    id,
+    const_int,
+    const_float,
+    const_char,
+    const_string,
     assigment,
     equal,
     no_equal,
@@ -20,19 +24,23 @@ enum _expr_type{
     sub_eq,
     mul,
     mul_eq,
-    div,
+    div_eq,
     div_residue,
     unarOR,
-    OR,
+    _or,
+    or_equal,
     unarXOR,
-    XOR,
+    _xor,
     unarAND,
-    AND,
+    _and,
+    and_equal,
     call_func,
     prefix_inc,
     prefix_dec,
     postfix_inc,
-    postfix_dec
+    postfix_dec,
+    point,
+    println
 };
 
 struct expression {
@@ -40,7 +48,7 @@ struct expression {
     struct expression *left;
     struct expression *rigth;
     struct expression *next;
-    //bool boolean;
+    //bool _boolean;
     int Conts_int;
     float Const_float;
     char Char;
@@ -118,6 +126,7 @@ struct nclass {
 
 };
 
-struct ids_list {
+struct id_list {
 
 };
+#endif

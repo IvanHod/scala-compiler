@@ -1,11 +1,12 @@
 %option noyywrap never-interactive
 
 %top {
-    #pragma warning(disable: 4996)
+    //#pragma warning(disable: 4996)
     #include <stdio.h>
     #include <stdlib.h>
     #include "bison.h"
     extern int yyparse(void);
+    char * formText(char* str);
 }
 
 %{
@@ -70,7 +71,7 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 
 "f\""                   { BEGIN(f_STRING); printf("f\" "); }
 
-<f_STRING>\${_id_}      { printf("ID "); }
+<f_STRING>\${_id_}      { printf("ID"); }
 <f_STRING>%s            { printf("%s "); }
 <f_STRING>%.f|d         { printf("%s "); }
 
@@ -79,8 +80,8 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
     /* ------------------------ array initialize --------------------------------*/
 
 "Array"                 { return ARRAY; }
-"["                     { return '['; }
-"]"                     { return ']'; }
+"["                     { return '[';   }
+"]"                     { return ']';   }
 
     /* ------------------------ keyword from "system" unit -------------------- */
 
@@ -107,8 +108,6 @@ lazy                    { return LAZY; }
 new                     { return NEW; }
 object                  { return OBJECT; }
 "return"                { return RETURN; }
-"\t"                    { printf("\t"); }
-"\n"                    { printf(";"); }
 
     /* ----------------------- cycle keywords -------------------------------- */
 
@@ -161,13 +160,19 @@ else                    { return ELSE; }
     /* ------------------------- declare ---------------------------------- */
 
 <INITIAL,s_STRING>println                { return PRINTFLN; }
-<INITIAL,s_STRING>0x[1-9ABCDFE]+         { printf("HEX_LITERAL: %f", atof(yytext));  }
-<INITIAL,s_STRING>0[0-7]+                { printf("OCT_LITERAL: %i ", strtol(yytext, NULL, 8)); }
-<INITIAL,s_STRING>([1-9][0-9]*)|0        { printf("INT_LITERAL: %d", atoi(yytext)); }
-<INITIAL,s_STRING>[1-9][0-9]*\.[0-9]*    { printf("NUMBER_FLOAT "); }
-<INITIAL,s_STRING>[1-9]e[0-9]*f          { printf("NUMBER_FLOAT "); }
+<INITIAL,s_STRING>0x[1-9ABCDFE]+         { yylval.int_const = atof(yytext);return CONST_INT;  }
+<INITIAL,s_STRING>0[0-7]+                { yylval.int_const = strtol(yytext, NULL, 8);return CONST_INT; }
+<INITIAL,s_STRING>([1-9][0-9]*)|0        { yylval.int_const = strtol(yytext, NULL, 10); return CONST_INT; }
+<INITIAL,s_STRING>[1-9][0-9]*\.[0-9]*    { printf("NUMBER_FLOAT ");return CONST_FLOAT; }
+<INITIAL,s_STRING>[1-9]e[0-9]*f          { printf("NUMBER_FLOAT ");return CONST_FLOAT; }
 
-<INITIAL,s_STRING>{_id_}                 { printf("ID "); }
+<INITIAL,s_STRING>{_id_}                 { yylval.string = formText(yytext); return ID; }
 
 <INITIAL,s_STRING>.                      {}
 %%
+
+char * formText(char* str) {
+    char * res = (char *)malloc(sizeof(char)*1024);
+    strcpy(res, str);
+    return res;
+}
