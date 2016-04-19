@@ -28,8 +28,8 @@ struct expression *CreateExprINT(int val ) {
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
-    node->Conts_int = val;
-    node->type = const_int;
+    node->Int = val;
+    node->type = Int;
     return node;
 }
 
@@ -38,8 +38,8 @@ struct expression *CreateExprFLOAT(float val ) {
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
-    node->Const_float = val;
-    node->type = const_float;
+    node->Float = val;
+    node->type = Float;
     return node;
 }
 
@@ -49,7 +49,7 @@ struct expression *CreateExprSTR(char* val ) {
     node->next = NULL;
     node->rigth = NULL;
     node->String = val;
-    node->type = const_string;
+    node->type = String;
     return node;
 }
 
@@ -58,53 +58,83 @@ struct expression *createExprBOOLEAN(int val ) {
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
-    //node->boolean = val;
-    node->type = const_int;
+    node->boolean = val;
+    node->type = Int;
     return node;
 }
 
 struct expression *CreateExprNULL() {
     struct expression *node = (struct expression *)malloc(sizeof(struct expression));
+    node->left = NULL;
+    node->next = NULL;
+    node->rigth = NULL;
+    node->type = Null;
     return node;
 }
 
 struct expression *CreateExprOperation(struct expression *expr_1, enum expr_type _type, struct expression *expr_2 ) {
     struct expression *node = (struct expression *)malloc(sizeof(struct expression));
+    node->left = expr_1;
+    node->rigth = expr_2;
+    node->type = _type;
     return node;
 }
 
 struct expression *CreateExprType(struct expression *expr ) {
     struct expression *node = (struct expression *)malloc(sizeof(struct expression));
+    node->left = expr;
+    node->rigth = NULL;
+    node->type = Type;
     return node;
 }
 
 struct expression *CreateExprCallFunc(char* id, struct expression_list *expr_list) {
     struct expression *node = (struct expression *)malloc(sizeof(struct expression));
+    node->String = id;
+    node->expr_list = expr_list;
     return node;
 }
 
 struct expression *CreateExprPrintln( enum expr_type _type, struct expression *expr) {
     struct expression *node = (struct expression *)malloc(sizeof(struct expression));
+    node->left = expr;
+    node->rigth = NULL;
+    node->type = _type;
     return node;
 }
 
 struct expression_list *CreateExprList( struct expression_list *expr_list , struct expression *expr) {
-    struct expression_list *node = (struct expression_list *)malloc(sizeof(struct expression_list));
+    struct expression_list *node = expr_list != NULL
+            ? (struct expression_list *)malloc(sizeof(struct expression_list))
+        : expr_list;
+    node->expr = expr;
+    node->next = NULL;
     return node;
 }
 
 struct nif *CreateIfStmt( struct expression *expr, struct statement *stmt, struct statement *else_stmt) {
     struct nif *node = (struct nif *)malloc(sizeof(struct nif));
+    node->expr = expr;
+    node->to_then = stmt;
+    node->to_else = else_stmt;
     return node;
 }
 
 struct nif_loop* CreateIfLoopExprList( struct nif_loop *parent, struct expression *expr ) {
     struct nif_loop *node = (struct nif_loop *)malloc(sizeof(struct nif_loop));
-    return node;
+    if( parent == NULL ) {
+        node->expr = expr;
+        return node;
+    } else {
+        parent->next = node;
+        parent->next->expr = expr;
+        return parent->next;
+    }
 }
 
 struct statement* CreateStmtExprList( struct expression_list *expr_list ) {
     struct statement *node = (struct statement *)malloc(sizeof(struct statement));
+
     return node;
 }
 

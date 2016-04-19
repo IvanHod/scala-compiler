@@ -11,7 +11,8 @@ HEADERS += \
     lexer.h \
     bison.h \
     structs.h \
-    func.h
+    func.h \
+    printTree.h
 
 DISTFILES += \
     parser.y \
