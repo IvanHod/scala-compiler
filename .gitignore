@@ -76,3 +76,5 @@ lex.yy.c
 parser.tab.c
 y.tab.c
 *.output
+*.xml
+*.txt

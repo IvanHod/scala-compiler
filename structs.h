@@ -68,6 +68,7 @@ enum statement_type {
     STMT_LIST,
     NIF,
     NIF_LOOP,
+    LOOP,
     NVAR,
     NVAL,
     NFUNC,
@@ -120,6 +121,7 @@ enum type_cicle {
 
 struct loop {
     enum type_cicle type;
+    struct nif_loop *if_loop;
     struct expression *expr_1;
     struct expression *expr_2;
     struct expression *expr_while;
@@ -132,11 +134,12 @@ struct nvar {
     struct expression* result;
     struct expression *array_expr_1;
     struct expression *array_expr_2;
-    struct expression_list expr_list;
+    struct expression *expr;
 };
 
 struct nval {
     struct id_list *ids_list;
+    struct expression *expr;
     char *return_value;
 };
 
@@ -150,7 +153,7 @@ struct nfunc {
 struct nclass {
     char* name;
     struct nargs *args;
-    struct statement_list stmt_list;
+    struct statement_list *stmt_list;
 };
 
 struct id_list {

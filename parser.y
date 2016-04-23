@@ -154,7 +154,7 @@ int yyerror(const char *msg);
         | DEF ID '(' func_args ')'
             ':' expr '=' stmt           { $$ = CreateStmtFunc($2, $4, $9, $7);              }
         | decl_var                      { $$ = CreateStmtDeclVar($1);                       }
-        | decl_val                      { $$ = CreateStmtDeclVar($1);                       }
+        | decl_val                      { $$ = CreateStmtDeclVal($1);                       }
         | Class                         { $$ = CreateStmtClass($1);                         }
         ;
 
@@ -170,12 +170,16 @@ int yyerror(const char *msg);
         | VAR id_list ';'               { $$ = CreateDeclVar($2, NULL, NULL);               }
         | VAR ID '=' expr ';'           { $$ = CreateDeclVar(NULL, $2, $4);                 }
         | VAR id_list '=' expr ';'      { $$ = CreateDeclVar($2, NULL, $4);                 }
-        | VAR ID ':' ID '=' expr ';'    { $$ = CreateDeclVarOfType(NULL, $2, $4, $6);       }
-        |VAR id_list ':' ID '=' expr ';'{ $$ = CreateDeclVarOfType($2, NULL, $4, $6);       }
-        | VAR ID '=' NEW ARRAY '[' expr ']' '(' expr ')' ';'   { $$ = CreateDeclVarArrayNew(NULL, $2, $7, $10);    }
-        | VAR id_list '=' NEW ARRAY '[' expr ']' '(' expr ')' ';'   { $$ = CreateDeclVarArrayNew($2, NULL, $7, $10);    }
-        | VAR ID '=' ARRAY '(' expr_list ')' ';'       { $$ = CreateDeclVarArray(NULL, $2, $6);            }
-        | VAR id_list '=' ARRAY '(' expr_list ')' ';'       { $$ = CreateDeclVarArray($2, NULL, $6);            }
+        | VAR ID ':' ID '=' expr ';'    { $$ = CreateDeclVarOfType($2, NULL, $4, $6);       }
+        |VAR id_list ':' ID '=' expr ';'{ $$ = CreateDeclVarOfType(NULL, $2, $4, $6);       }
+        | VAR ID '=' NEW ARRAY '[' expr
+            ']' '(' expr ')' ';'        { $$ = CreateDeclVarArrayNew(NULL, $2, $7, $10);    }
+        | VAR id_list '=' NEW ARRAY '['
+            expr ']' '(' expr ')' ';'   { $$ = CreateDeclVarArrayNew($2, NULL, $7, $10);    }
+        | VAR ID '=' ARRAY '('
+            expr_list ')' ';'           { $$ = CreateDeclVarArray(NULL, $2, $6);            }
+        | VAR id_list '=' ARRAY '('
+            expr_list ')' ';'           { $$ = CreateDeclVarArray($2, NULL, $6);            }
         ;
 
     decl_val: VAL ID ';'                { $$ = CreateDeclVal(NULL, $2, NULL);               }

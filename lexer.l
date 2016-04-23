@@ -163,8 +163,8 @@ else                    { return ELSE; }
 <INITIAL,s_STRING>0x[1-9ABCDFE]+         { yylval.int_const = atof(yytext);return CONST_INT;  }
 <INITIAL,s_STRING>0[0-7]+                { yylval.int_const = strtol(yytext, NULL, 8);return CONST_INT; }
 <INITIAL,s_STRING>([1-9][0-9]*)|0        { yylval.int_const = strtol(yytext, NULL, 10); return CONST_INT; }
-<INITIAL,s_STRING>[1-9][0-9]*\.[0-9]*    { printf("NUMBER_FLOAT ");return CONST_FLOAT; }
-<INITIAL,s_STRING>[1-9]e[0-9]*f          { printf("NUMBER_FLOAT ");return CONST_FLOAT; }
+<INITIAL,s_STRING>[1-9][0-9]*\.[0-9]*    { return CONST_FLOAT; }
+<INITIAL,s_STRING>[1-9]e[0-9]*f          { return CONST_FLOAT; }
 
 <INITIAL,s_STRING>{_id_}                 { yylval.string = formText(yytext); return ID; }
 

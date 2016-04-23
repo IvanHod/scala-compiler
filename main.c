@@ -19,7 +19,10 @@ int main(int argc, char *argv[])
         printf("%d", r);
     } else
         printf("error: Can`t open file.");
-    root;
+    writeFile = fopen("/home/ivan/qt-creator-projects/scala-compiler/outTree.xml", "wb");
+    if( writeFile == NULL)
+        printf("can not open file for write;");
     printf_root();
+    fclose(writeFile);
     return 0;
 }
