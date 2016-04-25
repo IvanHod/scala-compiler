@@ -146,9 +146,10 @@ void printf_func(struct nfunc *func) {
 }
 
 void printf_class(struct nclass *_class) {
-    printf("class %s\n", _class->name);
+    writeStr( strcat_3("<class id=\"", _class->name, "\">"));
     printf_args(_class->args);
     printf_stmt_list(_class->stmt_list);
+    writeStr("</class>");
 }
 
 void printf_expr(struct expression *expr) {
