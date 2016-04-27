@@ -106,11 +106,12 @@ struct expression *CreateExprPrintln( enum expr_type _type, struct expression *e
 }
 
 struct expression_list *CreateExprList( struct expression_list *expr_list , struct expression *expr) {
-    struct expression_list *node = expr_list != NULL
-            ? (struct expression_list *)malloc(sizeof(struct expression_list))
-        : expr_list;
+    struct expression_list *node = (struct expression_list *)malloc(sizeof(struct expression_list));
     node->expr = expr;
     node->next = NULL;
+    if( expr_list != NULL ) {
+        node->next = expr_list;
+    }
     return node;
 }
 
@@ -247,7 +248,7 @@ struct nvar* CreateDeclVar( struct id_list* idList, char* id, struct expression 
     return node;
 }
 
-struct nvar* CreateDeclVarOfType( struct id_list* idList, char* id, char* type, struct expression *expr) {
+struct nvar* CreateDeclVarOfType( struct id_list* idList, char* id, struct expression * type, struct expression *expr) {
     struct nvar *node = (struct nvar *)malloc(sizeof(struct nvar));
     struct id_list *_id_list = idList == NULL
             ? (struct id_list *)malloc(sizeof(struct id_list))
@@ -258,13 +259,13 @@ struct nvar* CreateDeclVarOfType( struct id_list* idList, char* id, char* type, 
     }
     node->id_list = _id_list;
     node->return_value = type;
-    node->expr = expr;
+    node->result = expr;
     node->array_expr_1 = NULL;
     node->array_expr_2 = NULL;
     return node;
 }
 
-struct nvar* CreateDeclVarArrayNew( struct id_list* idList, char* id, struct expression *type, struct expression *count) {
+struct nvar* CreateDeclVarArrayNew( struct id_list* idList, struct expression* id, struct expression *type, struct expression *count) {
     struct nvar *node = (struct nvar *)malloc(sizeof(struct nvar));
     struct id_list *_id_list = idList == NULL
             ? (struct id_list *)malloc(sizeof(struct id_list))
@@ -279,7 +280,7 @@ struct nvar* CreateDeclVarArrayNew( struct id_list* idList, char* id, struct exp
     return node;
 }
 
-struct nvar* CreateDeclVarArray( struct id_list* idList, char* id, struct expression *expr) {
+struct nvar* CreateDeclVarArray( struct id_list* idList, char* id, struct expression_list *expr_list) {
     struct nvar *node = (struct nvar *)malloc(sizeof(struct nvar));
     struct id_list *_id_list = idList == NULL
             ? (struct id_list *)malloc(sizeof(struct id_list))
@@ -289,7 +290,7 @@ struct nvar* CreateDeclVarArray( struct id_list* idList, char* id, struct expres
         _id_list->next = NULL;
     }
     node->id_list = _id_list;
-    node->array_expr_2 = expr;
+    node->array_expr_list = expr_list;
     return node;
 }
 

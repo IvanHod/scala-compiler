@@ -62,6 +62,7 @@ int yyerror(const char *msg);
 %left '<' '>' LESS_THAN MORE_THAN LESS_EQ_THAN MORE_EQ_THAN
 %left AND
 %left OR
+%nonassoc ','
 %left '|'
 %left'^'
 %left'&'
@@ -104,7 +105,7 @@ int yyerror(const char *msg);
         | '-' expr %prec UMINUS         { $$ = CreateExprOperation( $2, usub, NULL);        }
         | expr '-' expr                 { $$ = CreateExprOperation( $1, sub, $3);           }
         | expr '*' expr                 { $$ = CreateExprOperation( $1, mul, $3);           }
-        | expr '/' expr                 { $$ = CreateExprOperation( $1, mul, $3);           }
+        | expr '/' expr                 { $$ = CreateExprOperation( $1, DIV, $3);           }
         | expr '^' expr                 { $$ = CreateExprOperation( $1, _xor, $3);          }
         | expr '%' expr                 { $$ = CreateExprOperation( $1, div_residue, $3);   }
         | expr '&' expr                 { $$ = CreateExprOperation( $1, unarAND, $3);       }
@@ -130,7 +131,7 @@ int yyerror(const char *msg);
         | PRINTFLN '(' 'f' expr ')'     { $$ = CreateExprPrintln( println, $4 );            }
         ;
 
-    expr_list:  expr                    { $$ = CreateExprList( $1, NULL );                  }
+    expr_list:  expr                    { $$ = CreateExprList( NULL, $1 );                  }
         | expr_list ',' expr            { $$ = CreateExprList( $1, $3 );                    }
         ;
 
@@ -170,16 +171,17 @@ int yyerror(const char *msg);
         | VAR id_list ';'               { $$ = CreateDeclVar($2, NULL, NULL);               }
         | VAR ID '=' expr ';'           { $$ = CreateDeclVar(NULL, $2, $4);                 }
         | VAR id_list '=' expr ';'      { $$ = CreateDeclVar($2, NULL, $4);                 }
-        | VAR ID ':' ID '=' expr ';'    { $$ = CreateDeclVarOfType($2, NULL, $4, $6);       }
-        |VAR id_list ':' ID '=' expr ';'{ $$ = CreateDeclVarOfType(NULL, $2, $4, $6);       }
+        | VAR ID ':' expr '=' expr ';'  { $$ = CreateDeclVarOfType(NULL, $2, $4, $6);       }
+        | VAR id_list ':' expr '='
+            expr ';'                    { $$ = CreateDeclVarOfType($2, NULL, $7, $10);      }
         | VAR ID '=' NEW ARRAY '[' expr
             ']' '(' expr ')' ';'        { $$ = CreateDeclVarArrayNew(NULL, $2, $7, $10);    }
         | VAR id_list '=' NEW ARRAY '['
             expr ']' '(' expr ')' ';'   { $$ = CreateDeclVarArrayNew($2, NULL, $7, $10);    }
         | VAR ID '=' ARRAY '('
-            expr_list ')' ';'           { $$ = CreateDeclVarArray(NULL, $2, $6);            }
+            expr_list ')' ';'                { $$ = CreateDeclVarArray(NULL, $2, $6);            }
         | VAR id_list '=' ARRAY '('
-            expr_list ')' ';'           { $$ = CreateDeclVarArray($2, NULL, $6);            }
+            expr_list ')' ';'                { $$ = CreateDeclVarArray($2, NULL, $6);            }
         ;
 
     decl_val: VAL ID ';'                { $$ = CreateDeclVal(NULL, $2, NULL);               }

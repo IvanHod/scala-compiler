@@ -26,6 +26,7 @@ enum expr_type{
     sub_eq,
     mul,
     mul_eq,
+    DIV,
     div_eq,
     div_residue,
     unarOR,
@@ -129,12 +130,12 @@ struct loop {
 };
 
 struct nvar {
-    struct id_list *id_list;
-    char *return_value;
-    struct expression* result;
+    struct id_list    *id_list;
+    struct expression *return_value;
+    struct expression *result;
     struct expression *array_expr_1;
     struct expression *array_expr_2;
-    struct expression *expr;
+    struct expression_list *array_expr_list;
 };
 
 struct nval {

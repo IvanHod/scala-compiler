@@ -126,6 +126,8 @@ void printf_var(struct nvar *var) {
     writeStr( "<var>");
     printf_id_list(var->id_list);
     printf_expr(var->result);
+    printf_expr(var->return_value);
+    printf_expr_list(var->array_expr_list);
     printf_expr(var->array_expr_1);
     printf_expr(var->array_expr_2);
     writeStr("</var>");
@@ -160,7 +162,7 @@ void printf_expr(struct expression *expr) {
         writeStr( strcat_3("<expression type=\"ID\" id=\"", expr->String, "\">"));
         break;
     case Int:
-        sprintf(expr->Int, "%d", str);
+        sprintf(str, "%d", expr->Int);
         writeStr( strcat_3("<expression type=\"const_int\" value=\"", str, "\">"));
         break;
     case Float:
@@ -250,6 +252,11 @@ void printf_expr(struct expression *expr) {
         break;
     case mul_eq:
         writeStr("<expression type=\"*=\">");
+        printf_expr(expr->left);
+        printf_expr(expr->rigth);
+        break;
+    case DIV:
+        writeStr("<expression type=\"/\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;

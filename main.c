@@ -18,6 +18,19 @@ bool isOpenFile(FILE *file, char* name) {
     }
 }
 
+char* replace(char* str, char* in, char* out) {
+    char *outStr = (char *)malloc(sizeof(str) + sizeof(out));
+    char *strIn = strstr(str, in);
+    if( strIn != NULL ) {
+        int endSimbol = strIn - str;
+        strncpy(outStr, str, endSimbol);
+        strcat(outStr, out);
+
+    } else
+        strcpy(outStr, str);
+    return outStr;
+}
+
 int main(int argc, char *argv[])
 {
     char files[COUNT_TEST][30] = {
@@ -34,7 +47,7 @@ int main(int argc, char *argv[])
             yyin = file;
             yyparse();
             char writeFile_path[100] = PATH_TO_DIR;
-            strcat(writeFile_path, files[i]);
+            strcat(writeFile_path, replace( files[i], ".txt", ".xml") );
             writeFile = fopen(writeFile_path, "wb" );
             if( isOpenFile(writeFile, files[i]) ) {
                 printf_root();

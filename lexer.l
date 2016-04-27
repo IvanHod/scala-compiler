@@ -26,20 +26,20 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 
     /* ------------------------ commentaries rules ----------------------------- */
 
-"//"                    { BEGIN(LINE_COMMENT);printf("LINE_COMMENT\n"); }
-"/*"                    { BEGIN(COMMENT); printf("START_COMMENT"); }
+"//"                    { BEGIN(LINE_COMMENT); }
+"/*"                    { BEGIN(COMMENT); }
 
 <LINE_COMMENT>\n        { BEGIN(INITIAL); }
 <LINE_COMMENT>.*        {}
 
-<COMMENT>"*/"           { BEGIN(INITIAL);printf("END_COMMENT"); }
+<COMMENT>"*/"           { BEGIN(INITIAL); }
 <COMMENT>.              {}
 
     /* ------------------------ strings rules ---------------------------------- */
 
-"'"                     { BEGIN(CHAR);printf("CONST_CHAR"); }
-"\""                    { BEGIN(STRING);printf("CONST_STRING"); }
-"\"\"\""                { BEGIN(MULT_STRING);printf("CONST_MANY_STRING"); }
+"'"                     { BEGIN(CHAR); }
+"\""                    { BEGIN(STRING); }
+"\"\"\""                { BEGIN(MULT_STRING); }
 
 <CHAR>"'"               { BEGIN(INITIAL); }
 <CHAR>.                 {}
@@ -51,8 +51,8 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 <STRING>"\\\\"          { printf("\\ "); }
 <STRING>"\\\'"          { printf("\' "); }
 <STRING>"\\\""          { printf("\" "); }
-<STRING>"\""            { BEGIN(INITIAL); }
-<STRING>.               {}
+<STRING>"\""            { BEGIN(INITIAL); return CONST_STR; }
+<STRING>.               { }
 <MULT_STRING>"\"\"\""   { BEGIN(INITIAL); }
 <MULT_STRING>.          {}
 
@@ -163,10 +163,10 @@ else                    { return ELSE; }
 <INITIAL,s_STRING>0x[1-9ABCDFE]+         { yylval.int_const = atof(yytext);return CONST_INT;  }
 <INITIAL,s_STRING>0[0-7]+                { yylval.int_const = strtol(yytext, NULL, 8);return CONST_INT; }
 <INITIAL,s_STRING>([1-9][0-9]*)|0        { yylval.int_const = strtol(yytext, NULL, 10); return CONST_INT; }
-<INITIAL,s_STRING>[1-9][0-9]*\.[0-9]*    { return CONST_FLOAT; }
-<INITIAL,s_STRING>[1-9]e[0-9]*f          { return CONST_FLOAT; }
+<INITIAL,s_STRING>[1-9][0-9]*\.[0-9]*    { yylval.float_const = atof(yytext); return CONST_FLOAT; }
+<INITIAL,s_STRING>[1-9]e[0-9]*f          { yylval.float_const = atof(yytext); return CONST_FLOAT; }
 
-<INITIAL,s_STRING>{_id_}                 { yylval.string = formText(yytext); return ID; }
+<INITIAL,s_STRING>{_id_}                 { yylval.id = formText(yytext); return ID; }
 
 <INITIAL,s_STRING>.                      {}
 %%
