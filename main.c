@@ -6,7 +6,7 @@
 #include "printTree.h"
 #include <stdbool.h>
 
-#define PATH_TO_DIR "/home/ivan/qt-creator-projects/scala-compiler/"
+#define PATH_TO_DIR "/home/ivan/qt-creator-projects/scala-compiler/tests/"
 #define COUNT_TEST 5
 
 bool isOpenFile(FILE *file, char* name) {

@@ -45,14 +45,14 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 
 <CHAR>"'"               { BEGIN(INITIAL); }
 <CHAR>.                 {}
-<STRING>"\\n"           { printf(" \n "); }
-<STRING>"\\f"           { printf(" \n "); }
-<STRING>"\\r"           { printf(" \n "); }
-<STRING>"\\b"           { printf(" \n "); }
-<STRING>"\\t"           { printf(" \t "); }
-<STRING>"\\\\"          { printf("\\ "); }
-<STRING>"\\\'"          { printf("\' "); }
-<STRING>"\\\""          { printf("\" "); }
+<STRING>"\\n"           { strcat(string, yytext); }
+<STRING>"\\f"           { strcat(string, yytext); }
+<STRING>"\\r"           { strcat(string, yytext); }
+<STRING>"\\b"           { strcat(string, yytext); }
+<STRING>"\\t"           { strcat(string, yytext); }
+<STRING>"\\\\"          { strcat(string, yytext); }
+<STRING>"\\\'"          { strcat(string, yytext); }
+<STRING>"\\\""          { strcat(string, yytext); }
 <STRING>"\""            { BEGIN(INITIAL); return CONST_STR; }
 <STRING>.               { strcat(string, yytext); }
 <MULT_STRING>"\"\"\""   { BEGIN(INITIAL); }
@@ -62,18 +62,18 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 
 "s\""                   { BEGIN(s_STRING); printf("s\" "); }
 
-<s_STRING>\${_id_}      { printf("ID "); }
-<s_STRING>\$\{          { BEGIN( s_STRING ); printf("${ "); }
-<s_STRING>"\""          { BEGIN(INITIAL); printf("\""); }
+<s_STRING>\${_id_}      { yylval.id = formText(yytext); return ID; }
+<s_STRING>\$\{          { BEGIN( s_STRING ); }
+<s_STRING>"\""          { BEGIN(INITIAL); }
 
-<s_STRING>"}"           { BEGIN( s_STRING ); printf("} "); }
+<s_STRING>"}"           { BEGIN( s_STRING ); }
 <s_STRING>.             {}
 
     /* ------------------------ f_STRING rules --------------------------------- */
 
-"f\""                   { BEGIN(f_STRING); printf("f\" "); }
+"f\""                   { BEGIN(f_STRING); }
 
-<f_STRING>\${_id_}      { printf("ID"); }
+<f_STRING>\${_id_}      { yylval.id = formText(yytext); return ID; }
 <f_STRING>%s            { printf("%s "); }
 <f_STRING>%.f|d         { printf("%s "); }
 
