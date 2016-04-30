@@ -7,6 +7,8 @@
     #include "bison.h"
     extern int yyparse(void);
     char * formText(char* str);
+
+    extern string[200];
 }
 
 %{
@@ -38,7 +40,7 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
     /* ------------------------ strings rules ---------------------------------- */
 
 "'"                     { BEGIN(CHAR); }
-"\""                    { BEGIN(STRING); }
+"\""                    { strcpy(string, "");BEGIN(STRING); }
 "\"\"\""                { BEGIN(MULT_STRING); }
 
 <CHAR>"'"               { BEGIN(INITIAL); }
@@ -52,7 +54,7 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 <STRING>"\\\'"          { printf("\' "); }
 <STRING>"\\\""          { printf("\" "); }
 <STRING>"\""            { BEGIN(INITIAL); return CONST_STR; }
-<STRING>.               { }
+<STRING>.               { strcat(string, yytext); }
 <MULT_STRING>"\"\"\""   { BEGIN(INITIAL); }
 <MULT_STRING>.          {}
 
@@ -141,8 +143,8 @@ else                    { return ELSE; }
 <INITIAL,s_STRING>"/="  { return DIV_EQUAL; }
 <INITIAL,s_STRING>"%="  { return DIV_WITH_REM_EQUAL; }
 <INITIAL,s_STRING>"="   { return '='; }
-<INITIAL,s_STRING>"++"  { return PREFIX_INC; }
-<INITIAL,s_STRING>"--"  { return PREFIX_DEC; }
+<INITIAL,s_STRING>"++"  { return INC; }
+<INITIAL,s_STRING>"--"  { return DEC; }
 <INITIAL,s_STRING>"+"   { return '+'; }
 <INITIAL,s_STRING>"-"   { return '-'; }
 <INITIAL,s_STRING>"*"   { return '*'; }

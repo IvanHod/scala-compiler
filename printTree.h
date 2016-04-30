@@ -12,6 +12,7 @@ void printf_expr_list(struct expression_list *);
 void printf_expr(struct expression*);
 void printf_if(struct nif*);
 void printf_if_loop(struct nif_loop*);
+void printf_loop(struct loop*);
 void printf_var(struct nvar*);
 void printf_val(struct nval*);
 void printf_func(struct nfunc*);
@@ -56,6 +57,7 @@ void printf_stmt_list(struct statement_list *_stmt_list) {
 }
 
 void printf_stmt(struct statement *stmt) {
+    if( stmt == NULL ) return;
     switch (stmt->type) {
     case EXPR_LIST  :
         writeStr("<statement type=\"expr_list\">");
@@ -69,9 +71,9 @@ void printf_stmt(struct statement *stmt) {
         writeStr("<statement type=\"if\">");
         printf_if(stmt->_if);
         break;
-    case NIF_LOOP   :
-        writeStr("<statement type=\"if_loop\">");
-        printf_if_loop(stmt->loop);
+    case LOOP   :
+        writeStr("<statement type=\"loop\">");
+        printf_loop(stmt->_loop);
         break;
     case NVAR       :
         writeStr("<statement type=\"var\">");
@@ -96,10 +98,12 @@ void printf_stmt(struct statement *stmt) {
 
 void printf_expr_list(struct expression_list *_expr_list) {
     struct expression_list *expr_list = _expr_list;
+    writeStr("<expression_list>");
     while ( expr_list != NULL ) {
         printf_expr(expr_list->expr);
         expr_list = expr_list->next;
     }
+    writeStr("</expression_list>");
 }
 
 void printf_if( struct nif *_nif) {
@@ -120,6 +124,23 @@ void printf_if_loop(struct nif_loop *_if_loop) {
         printf_expr(if_loop->expr);
         if_loop = if_loop->next;
     }
+}
+
+void printf_loop(struct loop* _loop) {
+    switch (_loop->type) {
+    case CICLE_FOR:
+        writeStr(strcat_3("<loop type=\"FOR\" var=\">", _loop->id, "\">") );
+        printf_expr(_loop->expr_1);
+        printf_expr(_loop->expr_2);
+        printf_stmt(_loop->stmt);
+        break;
+    case CICLE_WHILE:
+        writeStr( "<loop type=\"WHILE\">" );
+        printf_expr(_loop->expr_while);
+        printf_stmt(_loop->stmt);
+        break;
+    }
+    writeStr("</loop>");
 }
 
 void printf_var(struct nvar *var) {
@@ -202,22 +223,22 @@ void printf_expr(struct expression *expr) {
         printf_expr(expr->left);
         break;
     case more:
-        writeStr("<expression type=\">\">");
+        writeStr("<expression type=\"MORE\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
     case more_eq:
-        writeStr("<expression type=\">=\">");
+        writeStr("<expression type=\"MORE_EQ\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
     case less:
-        writeStr("<expression type=\"<\">");
+        writeStr("<expression type=\"LESS\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
     case less_eq:
-        writeStr("<expression type=\"<=\">");
+        writeStr("<expression type=\"LESS_EQ\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
@@ -271,12 +292,12 @@ void printf_expr(struct expression *expr) {
         printf_expr(expr->rigth);
         break;
     case unarOR:
-        writeStr("<expression type=\"|\">");
+        writeStr("<expression type=\"UNAR_OR\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
     case _or:
-        writeStr("<expression type=\"||\">");
+        writeStr("<expression type=\"OR\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
@@ -296,17 +317,17 @@ void printf_expr(struct expression *expr) {
         printf_expr(expr->rigth);
         break;
     case unarAND:
-        writeStr("<expression type=\"&\">");
+        writeStr("<expression type=\"UNAR_AND\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
     case _and:
-        writeStr("<expression type=\"&&\">");
+        writeStr("<expression type=\"AND\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
     case and_equal:
-        writeStr("<expression type=\"&=\">");
+        writeStr("<expression type=\"AND_EQ\">");
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;

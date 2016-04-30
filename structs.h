@@ -81,7 +81,7 @@ struct statement {
     struct expression_list *expr_list;
     struct statement_list *stmt_list;
     struct nif *_if;
-    struct nif_loop *loop;
+    struct loop *_loop;
     struct nvar *to_print_var;
     struct nval *to_print_val;
     struct nfunc *to_print_func;
@@ -116,12 +116,13 @@ struct nargs {
 };
 
 enum type_cicle {
-    cicle_for,
-    cicle_while
+    CICLE_FOR,
+    CICLE_WHILE
 };
 
 struct loop {
     enum type_cicle type;
+    char *id;
     struct nif_loop *if_loop;
     struct expression *expr_1;
     struct expression *expr_2;

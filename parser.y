@@ -59,7 +59,7 @@ int yyerror(const char *msg);
 
 %right '='
 %left PLUS_EQUAL MINUS_EQUAL MUL_EQUAL DIV_EQUAL DIV_WITH_REM_EQUAL AND_EQUAL OR_EQUAL
-%left '<' '>' LESS_THAN MORE_THAN LESS_EQ_THAN MORE_EQ_THAN
+%left '<' '>' LESS_EQ_THAN MORE_EQ_THAN
 %left AND
 %left OR
 %nonassoc ','
@@ -71,7 +71,7 @@ int yyerror(const char *msg);
 %left '*' '/' '%'
 %left '!'
 %left UMINUS
-%right PREFIX_INC PREFIX_DEC
+%left INC DEC
 %nonassoc ']' ')'
 %left POSTFIX_INC POSTFIX_DEC
 %left '.'
@@ -113,16 +113,18 @@ int yyerror(const char *msg);
         | expr '|' expr                 { $$ = CreateExprOperation( $1, unarOR, $3);        }
         | expr OR expr                  { $$ = CreateExprOperation( $1, _or, $3);           }
         | expr EQUAL expr               { $$ = CreateExprOperation( $1, equal, $3);         }
-        | expr NOT_EQUAL                { $$ = CreateExprOperation( $1, no_equal, NULL);    }
-        | expr LESS_THAN expr           { $$ = CreateExprOperation( $1, less, $3);          }
-        | expr MORE_THAN expr           { $$ = CreateExprOperation( $1, more, $3);          }
+        | expr NOT_EQUAL expr           { $$ = CreateExprOperation( $1, no_equal, $3);    }
+        | '!' expr                      { $$ = CreateExprOperation( $2, no, NULL);          }
+        | expr '<' expr                 { $$ = CreateExprOperation( $1, less, $3);          }
+        | expr '>' expr                 { $$ = CreateExprOperation( $1, more, $3);          }
         | expr LESS_EQ_THAN expr        { $$ = CreateExprOperation( $1, less_eq, $3);       }
         | expr MORE_EQ_THAN expr        { $$ = CreateExprOperation( $1, more_eq, $3);       }
-        | PREFIX_DEC expr               { $$ = CreateExprOperation( $2, prefix_dec, NULL);  }
-        | PREFIX_INC expr               { $$ = CreateExprOperation( $2, prefix_inc, NULL);  }
-        | expr POSTFIX_DEC              { $$ = CreateExprOperation( $1, postfix_dec, NULL); }
-        | expr POSTFIX_INC              { $$ = CreateExprOperation( $1, postfix_inc, NULL); }
-        | ARRAY '[' expr ']'            { $$ = CreateExprType( $3 ); }
+        | DEC expr                      { $$ = CreateExprOperation( $2, prefix_dec, NULL);  }
+        | INC expr                      { $$ = CreateExprOperation( $2, prefix_inc, NULL);  }
+        | expr DEC %prec POSTFIX_DEC    { $$ = CreateExprOperation( $1, postfix_dec, NULL); }
+        | expr INC %prec POSTFIX_INC    { $$ = CreateExprOperation( $1, postfix_inc, NULL); }
+        | ARRAY '[' expr ']'            { $$ = CreateExprType( $3 );                        }
+        | '(' expr ')'                  { $$ = CreateExprInBraces( $2 );                    }
         | ID '(' ')'                    { $$ = CreateExprCallFunc( $1, NULL );              }
         | ID '(' expr_list ')'          { $$ = CreateExprCallFunc( $1, $3 );                }
         | PRINTFLN '(' ')'              { $$ = CreateExprPrintln( println, NULL );          }
@@ -139,17 +141,20 @@ int yyerror(const char *msg);
         |IF '(' expr ')' stmt ELSE stmt { $$ = CreateIfStmt( $3, $5, $7 );                  }
         ;
 
-    if_loop_expr_list: IF expr          { $$ = CreateIfLoopExprList( NULL, $2 );            }
+    if_loop_expr_list:
+        | IF expr                       { $$ = CreateIfLoopExprList( NULL, $2 );            }
         | if_loop_expr_list ';' IF expr { $$ = CreateIfLoopExprList( $1, $4 );              }
         ;
 
     stmt: expr_list ';'                 { $$ = CreateStmtExprList($1);                      }
         | '{' stmt_list '}'             { $$ = CreateStmtStmtList($2);                      }
+        | '{' '}'                       { $$ = CreateStmtStmtList(NULL);                    }
         | if_stmt                       { $$ = CreateStmtIf( $1 );                          }
         | FOR '(' ID LEFT_ARROW expr
-            ')' stmt                    { $$ = CreateStmtFor($3, $5, $7, NULL);             }
+            TO expr if_loop_expr_list
+            ')' stmt                    { $$ = CreateStmtFor($3, $5, $7, $8, $10 );         }
         | FOR '(' ID LEFT_ARROW expr
-            if_loop_expr_list ')' stmt  { $$ = CreateStmtFor($3, $5, $8, $6);               }
+            if_loop_expr_list ')' stmt  { $$ = CreateStmtFor($3, $5, NULL, $6, $8);         }
         | WHILE '(' expr ')' stmt       { $$ = CreateStmtWhile( $3, $5 );                   }
         | DEF ID '(' func_args ')' stmt { $$ = CreateStmtFunc($2, $4, $6, NULL);            }
         | DEF ID '(' func_args ')'
@@ -173,15 +178,15 @@ int yyerror(const char *msg);
         | VAR id_list '=' expr ';'      { $$ = CreateDeclVar($2, NULL, $4);                 }
         | VAR ID ':' expr '=' expr ';'  { $$ = CreateDeclVarOfType(NULL, $2, $4, $6);       }
         | VAR id_list ':' expr '='
-            expr ';'                    { $$ = CreateDeclVarOfType($2, NULL, $7, $10);      }
+            expr ';'                    { $$ = CreateDeclVarOfType($2, NULL, $4, $6);       }
         | VAR ID '=' NEW ARRAY '[' expr
             ']' '(' expr ')' ';'        { $$ = CreateDeclVarArrayNew(NULL, $2, $7, $10);    }
         | VAR id_list '=' NEW ARRAY '['
             expr ']' '(' expr ')' ';'   { $$ = CreateDeclVarArrayNew($2, NULL, $7, $10);    }
         | VAR ID '=' ARRAY '('
-            expr_list ')' ';'                { $$ = CreateDeclVarArray(NULL, $2, $6);            }
+            expr_list ')' ';'           { $$ = CreateDeclVarArray(NULL, $2, $6);            }
         | VAR id_list '=' ARRAY '('
-            expr_list ')' ';'                { $$ = CreateDeclVarArray($2, NULL, $6);            }
+            expr_list ')' ';'           { $$ = CreateDeclVarArray($2, NULL, $6);            }
         ;
 
     decl_val: VAL ID ';'                { $$ = CreateDeclVal(NULL, $2, NULL);               }

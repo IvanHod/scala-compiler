@@ -3,6 +3,8 @@
 
 #include "structs.h"
 
+char string[200];
+
 struct Root* CreateProgramm(char* id, struct statement_list *stmt_list) {
     struct Root *node = (struct Root *)malloc(sizeof(struct Root));
     node->stmt_list = stmt_list;
@@ -50,7 +52,7 @@ struct expression *CreateExprSTR(char* val ) {
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
-    node->String = val;
+    node->String = string;
     node->type = String;
     return node;
 }
@@ -72,6 +74,10 @@ struct expression *CreateExprNULL() {
     node->rigth = NULL;
     node->type = Null;
     return node;
+}
+
+struct expression *CreateExprInBraces(struct expression *expr) {
+    return expr;
 }
 
 struct expression *CreateExprOperation(struct expression *expr_1, enum expr_type _type, struct expression *expr_2 ) {
@@ -156,16 +162,17 @@ struct statement* CreateStmtIf( struct nif *_nif ) {
     return node;
 }
 
-struct statement* CreateStmtFor( struct expression *expr1, struct expression *expr2, struct statement *stmt, struct nif_loop *IF) {
+struct statement* CreateStmtFor( char* id, struct expression *expr1, struct expression *expr2, struct nif_loop *IF, struct statement *stmt) {
     struct statement *node = (struct statement *)malloc(sizeof(struct statement));
     struct loop *_loop = (struct loop *)malloc(sizeof(struct loop));
+    _loop->id = id;
     _loop->expr_1 = expr1;
     _loop->expr_2 = expr2;
     _loop->expr_while = NULL;
     _loop->stmt = stmt;
-    _loop->type = cicle_for;
+    _loop->type = CICLE_FOR;
     _loop->if_loop = IF;
-    node->loop = _loop;
+    node->_loop = _loop;
     node->type = LOOP;
     return node;
 }
@@ -177,9 +184,9 @@ struct statement* CreateStmtWhile( struct expression *expr, struct statement *st
     _loop->expr_2 = NULL;
     _loop->expr_while = expr;
     _loop->stmt = stmt;
-    _loop->type = cicle_while;
+    _loop->type = CICLE_WHILE;
     _loop->if_loop = NULL;
-    node->loop = _loop;
+    node->_loop = _loop;
     node->type = LOOP;
     return node;
 }
@@ -241,6 +248,7 @@ struct nvar* CreateDeclVar( struct id_list* idList, char* id, struct expression 
         _id_list->id = id;
         _id_list->next = NULL;
     }
+    string;
     node->id_list = _id_list;
     node->array_expr_1 = NULL;
     node->array_expr_2 = NULL;
@@ -321,7 +329,6 @@ struct id_list* CreateIdList( struct id_list* idList, char* id_1, char* id_2) {
         node->next->id = id_1;
         node->next->next = NULL;
     }
-    node = node->next;
     return node;
 }
 #endif
