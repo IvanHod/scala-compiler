@@ -8,7 +8,10 @@
     extern int yyparse(void);
     char * formText(char* str);
 
+
+    extern simbol;
     extern string[200];
+    extern multistring[500];
 }
 
 %{
@@ -104,12 +107,10 @@ var                     { return VAR; }
 public                  { return PUBLIC; }
 private                 { return PRIVATE; }
 protected               { return PROTECTED; }
-static                  { return STATIC; }
 this                    { return THIS; }
 lazy                    { return LAZY; }
 new                     { return NEW; }
 object                  { return OBJECT; }
-"return"                { return RETURN; }
 
     /* ----------------------- cycle keywords -------------------------------- */
 

@@ -76,8 +76,15 @@ enum statement_type {
     NCLASS
 };
 
+enum modifires {
+    MOD_PUBLIC,
+    MOD_PROTECTED,
+    MOD_PRIVATE
+};
+
 struct statement {
     enum statement_type type;
+    enum modifires mod;
     struct expression_list *expr_list;
     struct statement_list *stmt_list;
     struct nif *_if;

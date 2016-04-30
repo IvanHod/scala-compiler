@@ -3,7 +3,9 @@
 
 #include "structs.h"
 
+char simbol;
 char string[200];
+char multistring[500];
 
 struct Root* CreateProgramm(char* id, struct statement_list *stmt_list) {
     struct Root *node = (struct Root *)malloc(sizeof(struct Root));
@@ -12,8 +14,11 @@ struct Root* CreateProgramm(char* id, struct statement_list *stmt_list) {
     return node;
 }
 
-struct nclass* CreateClass( char* id, struct nnargs* nargs, struct statement_list* stmt_list  ) {
+struct nclass* CreateClass( char* id, struct nargs* _nargs, struct statement_list* stmt_list  ) {
     struct nclass *node = (struct nclass *)malloc(sizeof(struct nclass));
+    node->args = _nargs;
+    node->name = id;
+    node->stmt_list = stmt_list;
     return node;
 }
 
@@ -100,6 +105,7 @@ struct expression *CreateExprCallFunc(char* id, struct expression_list *expr_lis
     struct expression *node = (struct expression *)malloc(sizeof(struct expression));
     node->String = id;
     node->expr_list = expr_list;
+    node->type = call_func;
     return node;
 }
 
@@ -153,6 +159,11 @@ struct statement* CreateStmtStmtList( struct statement_list *stmt_list ) {
     node->stmt_list = stmt_list;
     node->type = STMT_LIST;
     return node;
+}
+
+struct statement* CreateStmtModifires( struct statement *stmt, enum modifires mod ) {
+    stmt->mod = mod;
+    return stmt;
 }
 
 struct statement* CreateStmtIf( struct nif *_nif ) {

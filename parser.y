@@ -81,7 +81,11 @@ int yyerror(const char *msg);
     root: OBJECT ID '{' stmt_list '}'   { $$ = root = CreateProgramm( $2, $4 );             }
         ;
 
-    Class: ID '(' func_args ')' '{' stmt_list '}' { $$ = CreateClass($1, $3, $6 );          }
+    Class: CLASS ID '{' stmt_list '}'   { $$ = CreateClass($2, NULL, $4 );                  }
+        | CLASS ID '(' ')'
+            '{' stmt_list '}'           { $$ = CreateClass($2, NULL, $6 );                  }
+        | CLASS ID '(' func_args ')'
+            '{' stmt_list '}'           { $$ = CreateClass($2, $4, $7 );                    }
         ;
 
     expr: ID                            { $$ = CreateExprID( $1 );                          }
@@ -123,7 +127,7 @@ int yyerror(const char *msg);
         | INC expr                      { $$ = CreateExprOperation( $2, prefix_inc, NULL);  }
         | expr DEC %prec POSTFIX_DEC    { $$ = CreateExprOperation( $1, postfix_dec, NULL); }
         | expr INC %prec POSTFIX_INC    { $$ = CreateExprOperation( $1, postfix_inc, NULL); }
-        | ARRAY '[' expr ']'            { $$ = CreateExprType( $3 );                        }
+        | ID '[' expr ']'            { $$ = CreateExprType( $3 );                        }
         | '(' expr ')'                  { $$ = CreateExprInBraces( $2 );                    }
         | ID '(' ')'                    { $$ = CreateExprCallFunc( $1, NULL );              }
         | ID '(' expr_list ')'          { $$ = CreateExprCallFunc( $1, $3 );                }
@@ -141,12 +145,14 @@ int yyerror(const char *msg);
         |IF '(' expr ')' stmt ELSE stmt { $$ = CreateIfStmt( $3, $5, $7 );                  }
         ;
 
-    if_loop_expr_list:
-        | IF expr                       { $$ = CreateIfLoopExprList( NULL, $2 );            }
+    if_loop_expr_list: IF expr          { $$ = CreateIfLoopExprList( NULL, $2 );            }
         | if_loop_expr_list ';' IF expr { $$ = CreateIfLoopExprList( $1, $4 );              }
         ;
 
     stmt: expr_list ';'                 { $$ = CreateStmtExprList($1);                      }
+        | PRIVATE stmt                  { $$ = CreateStmtModifires($2, MOD_PRIVATE);        }
+        | PROTECTED stmt                { $$ = CreateStmtModifires($2, MOD_PROTECTED);      }
+        | PUBLIC stmt                   { $$ = CreateStmtModifires($2, MOD_PUBLIC);         }
         | '{' stmt_list '}'             { $$ = CreateStmtStmtList($2);                      }
         | '{' '}'                       { $$ = CreateStmtStmtList(NULL);                    }
         | if_stmt                       { $$ = CreateStmtIf( $1 );                          }
@@ -156,7 +162,10 @@ int yyerror(const char *msg);
         | FOR '(' ID LEFT_ARROW expr
             if_loop_expr_list ')' stmt  { $$ = CreateStmtFor($3, $5, NULL, $6, $8);         }
         | WHILE '(' expr ')' stmt       { $$ = CreateStmtWhile( $3, $5 );                   }
+        | DEF ID '(' ')' stmt           { $$ = CreateStmtFunc($2, NULL, $5, NULL);          }
         | DEF ID '(' func_args ')' stmt { $$ = CreateStmtFunc($2, $4, $6, NULL);            }
+        | DEF ID '(' ')'
+            ':' expr '=' stmt           { $$ = CreateStmtFunc($2, NULL, $8, $6);            }
         | DEF ID '(' func_args ')'
             ':' expr '=' stmt           { $$ = CreateStmtFunc($2, $4, $9, $7);              }
         | decl_var                      { $$ = CreateStmtDeclVar($1);                       }

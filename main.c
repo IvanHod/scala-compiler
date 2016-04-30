@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 #define PATH_TO_DIR "/home/ivan/qt-creator-projects/scala-compiler/tests/"
-#define COUNT_TEST 5
+#define COUNT_TEST 8
 
 bool isOpenFile(FILE *file, char* name) {
     if( file != NULL)
@@ -34,11 +34,14 @@ char* replace(char* str, char* in, char* out) {
 int main(int argc, char *argv[])
 {
     char files[COUNT_TEST][30] = {
-        "declaration_vars.txt",
-        "arithmetical_operations.txt",
-        "logical_operation.txt",
-        "if_statements.txt",
-        "loop.txt"
+        //"declaration_vars.txt",
+        //"arithmetical_operations.txt",
+        //"logical_operation.txt",
+        //"if_statements.txt",
+        //"loop.txt",
+        //"functions.txt",
+        //"classes.txt",
+        "printf.txt"
     };
     int i = 0;
     for( i = 0; i < COUNT_TEST; i++ ) {

@@ -89,7 +89,7 @@ void printf_stmt(struct statement *stmt) {
         break;
     case NCLASS     :
         writeStr("<statement type=\"class\">");
-        printf_if_loop(stmt->to_print_class);
+        printf_class(stmt->to_print_class);
         break;
     }
     writeStr("</statement>");
@@ -332,7 +332,7 @@ void printf_expr(struct expression *expr) {
         printf_expr(expr->rigth);
         break;
     case call_func:
-        writeStr("<expression type=\"call_function\">");
+        writeStr(strcat_3("<expression type=\"call_function\" id=\"", expr->String, "\">"));
         printf_expr_list(expr->expr_list);
         break;
     case prefix_inc:
