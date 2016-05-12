@@ -34,8 +34,10 @@ char* strcat_2(char* str_1, char* str_2) {
 char* strcat_3(char* str_1, char* str_2, char* str_3) {
     char *result = (char *)malloc(sizeof(str_1) + sizeof(str_2) + sizeof(str_3));
     strcpy(result, str_1);
-    strcat(result, str_2);
-    strcat(result, str_3);
+    if( strlen(str_2) > 0 )
+        strcat(result, str_2);
+    if( strlen(str_3) > 0 )
+        strcat(result, str_3);
     return result;
 }
 
@@ -90,6 +92,10 @@ void printf_stmt(struct statement *stmt) {
     case NCLASS     :
         writeStr("<statement type=\"class\">");
         printf_class(stmt->to_print_class);
+        break;
+    case NOBJECT    :
+        writeStr( strcat_3("<statement type=\"object\" id=\"", stmt->to_print_object->name, "\">"));
+        printf_stmt_list(stmt->to_print_object->stmt_list);
         break;
     }
     writeStr("</statement>");
@@ -177,7 +183,7 @@ void printf_class(struct nclass *_class) {
 
 void printf_expr(struct expression *expr) {
     if( expr == NULL ) return;
-    char str[10];
+    char str[50];
     switch(expr->type) {
     case id:
         writeStr( strcat_3("<expression type=\"ID\" id=\"", expr->String, "\">"));
@@ -356,9 +362,30 @@ void printf_expr(struct expression *expr) {
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
-    case println: break;
+    case println:
+        writeStr("<expression type=\"printfln\">");
+        printf_expr_list(expr->expr_list);
+        break;
+    case println_s:
+        writeStr("<expression type=\"printfln\">");
+        printfHardString(expr->hString);
+        break;
     }
     writeStr("</expression>");
+}
+
+void printfHardString(struct hardString *str) {
+    char tmp[50];
+    strcpy(tmp, strcat_3(
+                "<printf type=\"s_string\" left=\"",
+                str->left,
+                "\" right=\""
+            ));
+    writeStr( strcat_3( tmp, str->right, "\">" ) );
+    printf_expr(str->expr);
+    writeStr("</printf>");
+    if( str->next != NULL )
+        printfHardString(str->next);
 }
 
 void printf_id_list(struct id_list *_id_list) {

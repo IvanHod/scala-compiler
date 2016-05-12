@@ -1,11 +1,21 @@
 #ifndef FUNC
 #define FUNC
 
+#include <stdbool.h>
 #include "structs.h"
 
 char simbol;
 char string[200];
+char left_string[200];
+char right_string[200];
+bool isLeftIsString = true;
 char multistring[500];
+
+char * fromText(char* str) {
+    char * res = (char *)malloc(sizeof(char)*1024);
+    strcpy(res, str);
+    return res;
+}
 
 struct Root* CreateProgramm(char* id, struct statement_list *stmt_list) {
     struct Root *node = (struct Root *)malloc(sizeof(struct Root));
@@ -49,6 +59,16 @@ struct expression *CreateExprFLOAT(float val ) {
     node->rigth = NULL;
     node->Float = val;
     node->type = Float;
+    return node;
+}
+
+struct expression *CreateExprCHAR(char val ) {
+    struct expression *node = (struct expression *)malloc(sizeof(struct expression));
+    node->left = NULL;
+    node->next = NULL;
+    node->rigth = NULL;
+    node->Char = val;
+    node->type = Char;
     return node;
 }
 
@@ -109,11 +129,32 @@ struct expression *CreateExprCallFunc(char* id, struct expression_list *expr_lis
     return node;
 }
 
-struct expression *CreateExprPrintln( enum expr_type _type, struct expression *expr) {
+struct expression *CreateExprPrintln( struct expression_list *expr_list) {
     struct expression *node = (struct expression *)malloc(sizeof(struct expression));
-    node->left = expr;
+    node->left = NULL;
     node->rigth = NULL;
-    node->type = _type;
+    node->type = println;
+    node->expr_list = expr_list;
+    return node;
+}
+
+struct expression *CreateExprPrintln_s( struct hardString *str) {
+    struct expression *node = (struct expression *)malloc(sizeof(struct expression));
+    node->left = NULL;
+    node->rigth = NULL;
+    node->type = println_s;
+    node->hString = str;
+    return node;
+}
+
+struct hardString * CreateHardString(struct hardString *prev, struct expression *expr) {
+    struct hardString *node = (struct hardString *)malloc(sizeof(struct hardString ));
+    node->left = fromText(left_string);
+    node->right = fromText(right_string);
+    strcpy(left_string, "");
+    strcpy(right_string, "");
+    node->expr = expr;
+    node->next = prev;
     return node;
 }
 
@@ -232,6 +273,15 @@ struct statement* CreateStmtClass( struct nclass* _class) {
     struct statement *node = (struct statement *)malloc(sizeof(struct statement));
     node->to_print_class = _class;
     node->type = NCLASS;
+    return node;
+}
+
+struct statement* CreateStmtObject( char* id, struct statement_list* stmt_list) {
+    struct statement *node = (struct statement *)malloc(sizeof(struct statement));
+    node->to_print_object = (struct nobject *)malloc(sizeof(struct nobject));
+    node->to_print_object->name = id;
+    node->to_print_object->stmt_list = stmt_list;
+    node->type = NOBJECT;
     return node;
 }
 

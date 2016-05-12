@@ -9,6 +9,7 @@ enum expr_type{
     Float,
     Char,
     String,
+    HardString,
     Null,
     Type,
     assigment,
@@ -43,7 +44,15 @@ enum expr_type{
     postfix_inc,
     postfix_dec,
     point,
+    println_s,
     println
+};
+
+struct hardString {
+    char* left;
+    struct expression *expr;
+    char* right;
+    struct hardString *next;
 };
 
 struct expression {
@@ -57,6 +66,7 @@ struct expression {
     float Float;
     char Char;
     char *String;
+    struct hardString *hString;
 };
 
 struct expression_list {
@@ -73,7 +83,8 @@ enum statement_type {
     NVAR,
     NVAL,
     NFUNC,
-    NCLASS
+    NCLASS,
+    NOBJECT
 };
 
 enum modifires {
@@ -93,6 +104,7 @@ struct statement {
     struct nval *to_print_val;
     struct nfunc *to_print_func;
     struct nclass *to_print_class;
+    struct nobject *to_print_object;
 };
 
 struct statement_list {
@@ -162,6 +174,11 @@ struct nfunc {
 struct nclass {
     char* name;
     struct nargs *args;
+    struct statement_list *stmt_list;
+};
+
+struct nobject {
+    char * name;
     struct statement_list *stmt_list;
 };
 

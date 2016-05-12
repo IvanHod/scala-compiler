@@ -13,6 +13,7 @@ int yyerror(const char *msg);
     float float_const;
     char* string;
     char* id;
+    char _char;
     int boolean;
     struct expression *_expr;
     struct expression_list *_expr_list;
@@ -25,6 +26,7 @@ int yyerror(const char *msg);
     struct nvar *_decl_var;
     struct nval *_decl_val;
     struct ids *_id_list;
+    struct hardString *_print_expr;
     struct Root *_root;
 };
 
@@ -42,20 +44,23 @@ int yyerror(const char *msg);
 %type <_decl_var> decl_var
 %type <_decl_val> decl_val
 %type <_id_list> id_list
+%type <_print_expr> print_expr
 
 %token<int_const> CONST_INT
 %token<float_const> CONST_FLOAT CONST_DOUBLE
+%token<_char> CONST_CHAR
 %token<string> CONST_STR
+%token CONST_S_STR
 %token<boolean> TRUE FALSE
 %token NULL_EXPR
 %token PRIVATE PROTECTED PUBLIC
 %token ARRAY
+%token EQUAL_RIGHT
 %token NEW STATIC THIS LAZY OBJECT EXTENDS CLASS OVERRIDE RETURN
 %token WHILE FOR TO CASE MATCH IF ELSE LEFT_ARROW
 %token PRINTLN
 %token DEF VAL VAR
 %token<id> ID
-%token PRINTFLN
 
 %right '='
 %left PLUS_EQUAL MINUS_EQUAL MUL_EQUAL DIV_EQUAL DIV_WITH_REM_EQUAL AND_EQUAL OR_EQUAL
@@ -92,6 +97,7 @@ int yyerror(const char *msg);
         | CONST_INT                     { $$ = CreateExprINT($1);                           }
         | CONST_FLOAT                   { $$ = CreateExprFLOAT($1);                         }
         | CONST_DOUBLE                  { $$ = CreateExprFLOAT($1);                         }
+        | CONST_CHAR                    { $$ = CreateExprCHAR($1);                          }
         | CONST_STR                     { $$ = CreateExprSTR($1);                           }
         | TRUE                          { $$ = CreateExprINT($1);                           }
         | FALSE                         { $$ = CreateExprINT($1);                           }
@@ -127,17 +133,21 @@ int yyerror(const char *msg);
         | INC expr                      { $$ = CreateExprOperation( $2, prefix_inc, NULL);  }
         | expr DEC %prec POSTFIX_DEC    { $$ = CreateExprOperation( $1, postfix_dec, NULL); }
         | expr INC %prec POSTFIX_INC    { $$ = CreateExprOperation( $1, postfix_inc, NULL); }
-        | ID '[' expr ']'            { $$ = CreateExprType( $3 );                        }
+        | ARRAY '[' expr ']'            { $$ = CreateExprType( $3 );                        }
         | '(' expr ')'                  { $$ = CreateExprInBraces( $2 );                    }
         | ID '(' ')'                    { $$ = CreateExprCallFunc( $1, NULL );              }
         | ID '(' expr_list ')'          { $$ = CreateExprCallFunc( $1, $3 );                }
-        | PRINTFLN '(' ')'              { $$ = CreateExprPrintln( println, NULL );          }
-        | PRINTFLN '(' expr ')'         { $$ = CreateExprPrintln( println, $3 );            }
-        | PRINTFLN '(' 'g' expr ')'     { $$ = CreateExprPrintln( println, $4 );            }
-        | PRINTFLN '(' 'f' expr ')'     { $$ = CreateExprPrintln( println, $4 );            }
+        | PRINTLN '(' expr_list ')'     { $$ = CreateExprPrintln( $3 );                     }
+        | PRINTLN '(' print_expr ')'    { $$ = CreateExprPrintln_s( $3 );                     }
+        | PRINTLN '(' ')'               { $$ = CreateExprPrintln( NULL );                   }
         ;
 
-    expr_list:  expr                    { $$ = CreateExprList( NULL, $1 );                  }
+
+    print_expr: CONST_S_STR             { $$ = CreateHardString(NULL, NULL);                }
+        | print_expr expr CONST_S_STR   { $$ = CreateHardString($1, $2);                    }
+        ;
+
+    expr_list: expr                     { $$ = CreateExprList( NULL, $1 );                  }
         | expr_list ',' expr            { $$ = CreateExprList( $1, $3 );                    }
         ;
 
@@ -170,11 +180,20 @@ int yyerror(const char *msg);
             ':' expr '=' stmt           { $$ = CreateStmtFunc($2, $4, $9, $7);              }
         | decl_var                      { $$ = CreateStmtDeclVar($1);                       }
         | decl_val                      { $$ = CreateStmtDeclVal($1);                       }
+        | match                         { $$ = CreateStmtDeclVal(NULL);                       }
         | Class                         { $$ = CreateStmtClass($1);                         }
+        | OBJECT ID '{' stmt_list '}'   { $$ = CreateStmtObject($2, $4);                    }
         ;
 
     stmt_list: stmt                     { $$ = CreateStmtList(NULL, $1);                    }
         | stmt_list stmt                { $$ = CreateStmtList($1, $2);                      }
+        ;
+
+    case_list: CASE expr EQUAL_RIGHT expr ';' {}
+        | case_list CASE expr EQUAL_RIGHT expr ';' {}
+        ;
+
+    match: ID MATCH '{' case_list '}'
         ;
 
     func_args: ID ':' expr              { $$ = CreateFuncArgs( NULL, $1, $3 );              }
