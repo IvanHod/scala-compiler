@@ -79,7 +79,7 @@ _id_ [A-Za-z_][A-Za-z_0-9]*
 <s_str_STRING>"\""      { BEGIN(INITIAL); isLeftIsString = true; return CONST_S_STR; }
 
 <s_STRING>"}"           { BEGIN( s_str_STRING ); }
-<s_str_STRING>.         { strcat(isLeftIsString ? left_string : right_string, yytext);           }
+<s_str_STRING>.         { strcat(isLeftIsString ? left_string : right_string, formText(yytext));           }
 
     /* ------------------------ f_STRING rules --------------------------------- */
 

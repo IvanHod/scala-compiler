@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include "structs.h"
 #include "func.h"
+#include <stdbool.h>
 
 int yyerror(const char *msg);
 
@@ -27,6 +28,8 @@ int yyerror(const char *msg);
     struct nval *_decl_val;
     struct ids *_id_list;
     struct hardString *_print_expr;
+    struct case_list *_case_list;
+    struct match * _match;
     struct Root *_root;
 };
 
@@ -45,6 +48,8 @@ int yyerror(const char *msg);
 %type <_decl_val> decl_val
 %type <_id_list> id_list
 %type <_print_expr> print_expr
+%type <_case_list> case_list
+%type <_match> match
 
 %token<int_const> CONST_INT
 %token<float_const> CONST_FLOAT CONST_DOUBLE
@@ -99,8 +104,8 @@ int yyerror(const char *msg);
         | CONST_DOUBLE                  { $$ = CreateExprFLOAT($1);                         }
         | CONST_CHAR                    { $$ = CreateExprCHAR($1);                          }
         | CONST_STR                     { $$ = CreateExprSTR($1);                           }
-        | TRUE                          { $$ = CreateExprINT($1);                           }
-        | FALSE                         { $$ = CreateExprINT($1);                           }
+        | TRUE                          { $$ = createExprBOOLEAN(true);                     }
+        | FALSE                         { $$ = createExprBOOLEAN(false);                    }
         | NULL_EXPR                     { $$ = CreateExprNULL();                            }
         | expr PLUS_EQUAL expr          { $$ = CreateExprOperation( $1, plus_eq, $3);       }
         | expr MINUS_EQUAL expr         { $$ = CreateExprOperation( $1, sub_eq, $3);        }
@@ -167,8 +172,12 @@ int yyerror(const char *msg);
         | '{' '}'                       { $$ = CreateStmtStmtList(NULL);                    }
         | if_stmt                       { $$ = CreateStmtIf( $1 );                          }
         | FOR '(' ID LEFT_ARROW expr
+            TO expr ')' stmt            { $$ = CreateStmtFor($3, $5, $7, NULL, $9 );       }
+        | FOR '(' ID LEFT_ARROW expr
             TO expr if_loop_expr_list
             ')' stmt                    { $$ = CreateStmtFor($3, $5, $7, $8, $10 );         }
+        | FOR '(' ID LEFT_ARROW expr
+             ')' stmt                   { $$ = CreateStmtFor($3, $5, NULL, NULL, $7);       }
         | FOR '(' ID LEFT_ARROW expr
             if_loop_expr_list ')' stmt  { $$ = CreateStmtFor($3, $5, NULL, $6, $8);         }
         | WHILE '(' expr ')' stmt       { $$ = CreateStmtWhile( $3, $5 );                   }
@@ -180,7 +189,7 @@ int yyerror(const char *msg);
             ':' expr '=' stmt           { $$ = CreateStmtFunc($2, $4, $9, $7);              }
         | decl_var                      { $$ = CreateStmtDeclVar($1);                       }
         | decl_val                      { $$ = CreateStmtDeclVal($1);                       }
-        | match                         { $$ = CreateStmtDeclVal(NULL);                       }
+        | match                         { $$ = CreateStmtMatch($1);                         }
         | Class                         { $$ = CreateStmtClass($1);                         }
         | OBJECT ID '{' stmt_list '}'   { $$ = CreateStmtObject($2, $4);                    }
         ;
@@ -189,11 +198,11 @@ int yyerror(const char *msg);
         | stmt_list stmt                { $$ = CreateStmtList($1, $2);                      }
         ;
 
-    case_list: CASE expr EQUAL_RIGHT expr ';' {}
-        | case_list CASE expr EQUAL_RIGHT expr ';' {}
+    case_list: CASE expr EQUAL_RIGHT expr ';' { $$ = CreateCaseList(NULL, $2, $4);          }
+        | case_list CASE expr EQUAL_RIGHT expr ';' { $$ = CreateCaseList($1, $3, $5);       }
         ;
 
-    match: ID MATCH '{' case_list '}'
+    match: expr MATCH '{' case_list '}' { $$ = CreateMatch($1, $4);                         }
         ;
 
     func_args: ID ':' expr              { $$ = CreateFuncArgs( NULL, $1, $3 );              }

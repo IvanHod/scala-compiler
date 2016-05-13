@@ -1,11 +1,14 @@
 #ifndef STRUCTS
 #define STRUCTS
 
+#include <stdbool.h>
+
 struct Root *root;
 
 enum expr_type{
     id,
     Int,
+    Bool,
     Float,
     Char,
     String,
@@ -59,19 +62,19 @@ struct expression {
     enum expr_type type;
     struct expression *left;
     struct expression *rigth;
-    struct expression *next;
     struct expression_list *expr_list;
-    int boolean;
+    bool boolean;
     int Int;
     float Float;
     char Char;
     char *String;
     struct hardString *hString;
+    struct expression *next;
 };
 
 struct expression_list {
-    struct expression *expr;
-    struct expression_list *next;
+    struct expression *first;
+    struct expression *last;
 };
 
 enum statement_type {
@@ -80,6 +83,7 @@ enum statement_type {
     NIF,
     NIF_LOOP,
     LOOP,
+    NMATCH,
     NVAR,
     NVAL,
     NFUNC,
@@ -103,13 +107,15 @@ struct statement {
     struct nvar *to_print_var;
     struct nval *to_print_val;
     struct nfunc *to_print_func;
+    struct match *to_print_match;
     struct nclass *to_print_class;
     struct nobject *to_print_object;
+    struct statement *next;
 };
 
 struct statement_list {
-    struct statement *stmt;
-    struct statement_list *next;
+    struct statement *first;
+    struct statement *last;
 };
 
 struct Root {
@@ -129,9 +135,14 @@ struct nif_loop {
 };
 
 struct nargs {
-    struct expression *expr;
-    struct nargs *next;
+    struct narg *first;
+    struct narg *last;
+};
+
+struct narg {
     char* id;
+    struct expression *expr;
+    struct narg *next;
 };
 
 enum type_cicle {
@@ -185,6 +196,22 @@ struct nobject {
 struct id_list {
     char* id;
     struct id_list *next;
+};
+
+struct case_list {
+    struct one_case* first;
+    struct one_case* last;
+};
+
+struct one_case {
+    struct expression *condition;
+    struct expression *perfomance;
+    struct one_case *next;
+};
+
+struct match {
+    struct expression *id;
+    struct case_list *list;
 };
 
 #endif

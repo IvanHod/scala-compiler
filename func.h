@@ -77,18 +77,18 @@ struct expression *CreateExprSTR(char* val ) {
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
-    node->String = string;
+    node->String = fromText(string);
     node->type = String;
     return node;
 }
 
-struct expression *createExprBOOLEAN(int val ) {
+struct expression *createExprBOOLEAN(bool val ) {
     struct expression *node = (struct expression *)malloc(sizeof(struct expression));
     node->left = NULL;
     node->next = NULL;
     node->rigth = NULL;
     node->boolean = val;
-    node->type = Int;
+    node->type = Bool;
     return node;
 }
 
@@ -159,13 +159,15 @@ struct hardString * CreateHardString(struct hardString *prev, struct expression 
 }
 
 struct expression_list *CreateExprList( struct expression_list *expr_list , struct expression *expr) {
-    struct expression_list *node = (struct expression_list *)malloc(sizeof(struct expression_list));
-    node->expr = expr;
-    node->next = NULL;
-    if( expr_list != NULL ) {
-        node->next = expr_list;
+    if( expr_list == NULL) {
+        expr_list = (struct expression_list *)malloc(sizeof(struct expression_list));
+        expr_list->first = expr;
+        expr_list->last = expr;
+    } else {
+        expr_list->last->next = expr;
+        expr_list = expr;
     }
-    return node;
+    return expr_list;
 }
 
 struct nif *CreateIfStmt( struct expression *expr, struct statement *stmt, struct statement *else_stmt) {
@@ -269,6 +271,13 @@ struct statement* CreateStmtDeclVal( struct nval *_val) {
     return node;
 }
 
+struct statement* CreateStmtMatch( struct match *_match) {
+    struct statement *node = (struct statement *)malloc(sizeof(struct statement));
+    node->to_print_match = _match;
+    node->type = NMATCH;
+    return node;
+}
+
 struct statement* CreateStmtClass( struct nclass* _class) {
     struct statement *node = (struct statement *)malloc(sizeof(struct statement));
     node->to_print_class = _class;
@@ -286,18 +295,58 @@ struct statement* CreateStmtObject( char* id, struct statement_list* stmt_list) 
 }
 
 struct statement_list* CreateStmtList( struct statement_list* stmt_list, struct statement *stmt) {
-    struct statement_list *node = (struct statement_list *)malloc(sizeof(struct statement_list));
-    node->next = stmt_list;
-    node->stmt = stmt;
+    if( stmt_list == NULL){
+        stmt_list = (struct statement_list *)malloc(sizeof(struct statement_list));
+        stmt_list->first = stmt;
+        stmt_list->last = stmt;
+    }
+    else {
+        stmt_list->last->next = stmt;
+        stmt_list->last = stmt;
+    }
+    return stmt_list;
+}
+
+struct case_list * CreateCaseList(struct case_list *list, struct expression* expr1, struct expression *expr2) {
+    if( list == NULL) {
+        list = (struct case_list *)malloc(sizeof(struct case_list));
+        struct one_case *_case = (struct one_case*)malloc(sizeof(struct one_case));
+        _case->condition = expr1;
+        _case->perfomance = expr2;
+        list->first = _case;
+        list->last = _case;
+    } else {
+        struct one_case *_case = (struct one_case*)malloc(sizeof(struct one_case));
+        _case->condition = expr1;
+        _case->perfomance = expr2;
+        list->last->next = _case;
+        list->last = _case;
+    }
+    return list;
+}
+
+struct match * CreateMatch(struct expression *expr, struct case_list *caseList) {
+    struct match *node = (struct match *)malloc(sizeof(struct match));
+    node->id = expr;
+    node->list = caseList;
     return node;
 }
 
 struct nargs* CreateFuncArgs( struct nargs* _nargs, char* id, struct expression *expr) {
-    struct nargs *node = (struct nargs *)malloc(sizeof(struct nargs));
-    node->expr = expr;
-    node->id = id;
-    node->next = _nargs;
-    return node;
+    if( _nargs == NULL) {
+        _nargs = (struct nargs *)malloc(sizeof(struct nargs));
+        struct narg* arg = (struct narg *)malloc(sizeof(struct narg));
+        arg->id = id;
+        arg->expr = expr;
+        _nargs->first = arg;
+        _nargs->last  = arg;
+    } else {
+        _nargs->last->next  = (struct narg *)malloc(sizeof(struct narg));
+        _nargs->last->next->id = id;
+        _nargs->last->next->expr = expr;
+        _nargs->last = _nargs->last->next;
+    }
+    return _nargs;
 }
 
 struct nvar* CreateDeclVar( struct id_list* idList, char* id, struct expression *expr) {

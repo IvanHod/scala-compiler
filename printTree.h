@@ -50,10 +50,10 @@ void printf_root() {
 
 void printf_stmt_list(struct statement_list *_stmt_list) {
     writeStr("<statement_list>");
-    struct statement_list *stmt_list = _stmt_list;
-    while ( stmt_list != NULL ) {
-        printf_stmt(stmt_list->stmt);
-        stmt_list = stmt_list->next;
+    struct statement *stmt = _stmt_list->first;
+    while ( stmt != NULL ) {
+        printf_stmt(stmt);
+        stmt = stmt->next;
     }
     writeStr("</statement_list>");
 }
@@ -89,6 +89,10 @@ void printf_stmt(struct statement *stmt) {
         writeStr("<statement type=\"function\">");
         printf_func(stmt->to_print_func);
         break;
+    case NMATCH      :
+        writeStr("<statement type=\"match\">");
+        printf_match(stmt->to_print_match);
+        break;
     case NCLASS     :
         writeStr("<statement type=\"class\">");
         printf_class(stmt->to_print_class);
@@ -101,13 +105,27 @@ void printf_stmt(struct statement *stmt) {
     writeStr("</statement>");
 }
 
+void printf_match(struct match * _match) {
+    writeStr("<match>");
+    printf_expr(_match->id);
+    struct one_case *_case = _match->list->first;
+    while ( _case != NULL) {
+        writeStr("<case>");
+        printf_expr(_case->condition);
+        printf_expr(_case->perfomance);
+        writeStr("</case>");
+        _case = _case->next;
+    }
+    writeStr("</match>");
+}
 
-void printf_expr_list(struct expression_list *_expr_list) {
-    struct expression_list *expr_list = _expr_list;
+
+void printf_expr_list(struct expression_list *expr_list) {
+    struct expression *expr = expr_list->first;
     writeStr("<expression_list>");
-    while ( expr_list != NULL ) {
-        printf_expr(expr_list->expr);
-        expr_list = expr_list->next;
+    while ( expr != NULL ) {
+        printf_expr(expr);
+        expr = expr->next;
     }
     writeStr("</expression_list>");
 }
@@ -191,6 +209,10 @@ void printf_expr(struct expression *expr) {
     case Int:
         sprintf(str, "%d", expr->Int);
         writeStr( strcat_3("<expression type=\"const_int\" value=\"", str, "\">"));
+        break;
+    case Bool:
+        sprintf(str, "%d", expr->boolean);
+        writeStr( strcat_3("<expression type=\"const_bool\" value=\"", str, "\">"));
         break;
     case Float:
         sprintf(str, "%f", expr->Float);
@@ -399,13 +421,13 @@ void printf_id_list(struct id_list *_id_list) {
 }
 
 void printf_args(struct nargs *_args) {
-    struct nargs *args = _args;
-    writeStr("<args>");
-    while ( args != NULL ) {
-        printf_expr(args->expr);
-        args = args->next;
+    struct narg *arg = _args->first;
+    while ( arg != NULL ) {
+        writeStr( strcat_3("<arg id=\"", arg->id, "\">"));
+        printf_expr(arg->expr);
+        writeStr("</arg>");
+        arg = arg->next;
     }
-    writeStr("</args>");
 }
 
 #endif
