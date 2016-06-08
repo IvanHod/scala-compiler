@@ -1,5 +1,8 @@
+#include "func.h"
 #include "semantic.h"
 
+char* CLASS_NAME = "GO_CLASS";
+int scope = 0;
 
 bool doSemantic(struct Root* root) {
     //create class to wrap programm
@@ -18,101 +21,97 @@ bool doSemantic(struct Root* root) {
     semanticClass->methodsTable = methodsTable;
 
     //add CLASS's name to constantsTAble
-    struct Constant* constClassName = addUtf8ToConstantsTable(CLASS_NAME);
+    struct Constant* constClassName = addUtf8ToConstantsTable(root->id);
     //add class to constants table
-    constantClass = addClassToConstantsTable(CLASS_NAME);
+    constantClass = addClassToConstantsTable(root->id);
 
-    //
     bool isOk = true;
-    struct DeclarationList* declList = program->declList;
+    struct statement* stmt = root->stmt_list->first;
 
-    if (declList != NULL) {
-        struct Declaration* decl = declList->firstDecl;
-        while (decl != NULL && isOk) {
-            if (decl->declType == CONST_DECL) {
-                isOk = checkSemanticConstDecl(decl->constDecl, NULL);
-            }
-            else if (decl->declType == VAR_DECL) {
-                isOk = checkSemanticVarDecl(decl->varDecl, NULL);
-            }
-            else if (decl->declType == FUNC_DECL) {
-                isOk = checkSemanticFunctionDecl(decl->funcDecl);
-            }
-            decl = decl->nextDecl;
-        }
+    while (stmt != NULL && isOk) {
+        isOk = check_stmt_list(stmt);
+        stmt = stmt->next;
     }
-
-    //TODO: yield an error if function main not found
-    //check semantic main function (function without parameters)
     return isOk;
 }
 
 
-void check_stmt_list(struct statement_list *_stmt_list) {
+bool check_stmt_list(struct statement_list *_stmt_list) {
     struct statement *stmt = _stmt_list->first;
-    while ( stmt != NULL ) {
-        check_stmt(stmt);
+    bool isOk = true;
+    while ( stmt != NULL && isOk ) {
+        isOk = check_stmt(stmt);
         stmt = stmt->next;
     }
+    return isOk;
 }
 
-void check_expr_list(struct expression_list *_expr_list) {
+bool check_expr_list(struct expression_list *_expr_list) {
     struct expression *expr = _expr_list->first;
-    while ( expr != NULL ) {
+    bool isOk = true;
+    while ( expr != NULL && isOk ) {
+        isOk = check_expr(expr);
         expr = expr->next;
     }
+    return isOk;
 }
 
-void check_stmt(struct statement *stmt) {
+bool check_stmt(struct statement *stmt) {
     if( stmt == NULL ) return;
+    bool isOk = true;
     switch (stmt->type) {
     case EXPR_LIST  :
-        check_expr_list(stmt->expr_list);
+        isOk = check_expr_list(stmt->expr_list);
         break;
     case STMT_LIST  :
-        check_stmt_list(stmt->stmt_list);
+        isOk = check_stmt_list(stmt->stmt_list);
         break;
     case NIF    :
-        check_if(stmt->_if);
+        isOk = check_if(stmt->_if);
         break;
     case LOOP   :
-        check_loop(stmt->_loop);
+        isOk = check_loop(stmt->_loop);
         break;
     case NVAR   :
-        check_var(stmt->to_print_var);
+        isOk = check_var(stmt->to_print_var);
         break;
     case NVAL   :
-        check_val(stmt->to_print_val);
+        isOk = check_val(stmt->to_print_val);
         break;
     case NFUNC  :
-        check_func(stmt->to_print_func);
+        isOk = check_func(stmt->to_print_func);
         break;
     case NMATCH :
 
         break;
     }
+    return isOk;
 }
 
-void check_expr(struct expression *expr) {
-    if( expr == NULL ) return;
-    char str[50];
+bool check_expr(struct expression *expr) {
+    if( expr == NULL ) return true;
+    bool isOk = true;
+    struct SemanticType* type = (struct SemanticType*)malloc(sizeof(struct SemanticType));
     switch(expr->type) {
-    case id:
+    case id: {
+
         break;
+    }
     case Int:
+        type->typeName = INT_TYPE_NAME;
         break;
     case Bool:
+        type->typeName = BOOL_TYPE_NAME;
         break;
     case Float:
+        type->typeName = FLOAT32_TYPE_NAME;
         break;
-    case Char:
+    case Char: {
+        type->typeName = CHAR_TYPE_NAME;
         break;
+    }
     case String:
-        break;
-    case Null:
-        break;
-    case Type:
-        printf_expr(expr->left);
+        type->typeName = STRING_TYPE_NAME;
         break;
     case assigment:
         printf_expr(expr->left);
@@ -150,35 +149,69 @@ void check_expr(struct expression *expr) {
         printf_expr(expr->rigth);
         break;
     case plus_eq:
-        printf_expr(expr->left);
-        printf_expr(expr->rigth);
+        expr->rigth = CreateExprOperation(expr->left, plus, expr->rigth);
+        expr->type = assigment;
+        isOk = check_expr(expr->rigth);
+        if(isOk) {
+
+        } else {
+
+        }
         break;
     case usub:
-        printf_expr(expr->left);
+        if(expr->left->type == Int || expr->left->type == Float) {
+            expr->left->Int = expr->left->Int * -1;
+            expr = expr->left;
+        } else if( expr->left->type == id ) {
+            expr->rigth = expr->left;
+            expr->left = CreateExprINT(0);
+            expr->type = sub;
+        } else {
+            printf("Unar minus can to use with int or float number");
+            isOk = false;
+        }
         break;
     case sub:
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
     case sub_eq:
-        printf_expr(expr->left);
-        printf_expr(expr->rigth);
+        expr->rigth = CreateExprOperation(expr->left, sub, expr->rigth);
+        expr->type = assigment;
+        isOk = check_expr(expr->rigth);
+        if(isOk) {
+
+        } else {
+
+        }
         break;
     case mul:
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
     case mul_eq:
-        printf_expr(expr->left);
-        printf_expr(expr->rigth);
+        expr->rigth = CreateExprOperation(expr->left, mul, expr->rigth);
+        expr->type = assigment;
+        isOk = check_expr(expr->rigth);
+        if(isOk) {
+
+        } else {
+
+        }
         break;
     case DIV:
         printf_expr(expr->left);
         printf_expr(expr->rigth);
         break;
     case div_eq:
-        printf_expr(expr->left);
-        printf_expr(expr->rigth);
+        expr->rigth = CreateExprOperation(expr->left, DIV, expr->rigth);
+        expr->type = assigment;
+        isOk = check_expr(expr->rigth);
+        if(isOk) {
+
+        } else {
+
+        }
         break;
     case div_residue:
         printf_expr(expr->left);
@@ -193,8 +226,14 @@ void check_expr(struct expression *expr) {
         printf_expr(expr->rigth);
         break;
     case or_equal:
-        printf_expr(expr->left);
-        printf_expr(expr->rigth);
+        expr->rigth = CreateExprOperation(expr->left, _or, expr->rigth);
+        expr->type = assigment;
+        isOk = check_expr(expr->rigth);
+        if(isOk) {
+
+        } else {
+
+        }
         break;
     case unarXOR:
         printf_expr(expr->left);
@@ -213,23 +252,35 @@ void check_expr(struct expression *expr) {
         printf_expr(expr->rigth);
         break;
     case and_equal:
-        printf_expr(expr->left);
-        printf_expr(expr->rigth);
+        expr->rigth = CreateExprOperation(expr->left, _and, expr->rigth);
+        expr->type = assigment;
+        isOk = check_expr(expr->rigth);
+        if(isOk) {
+
+        } else {
+
+        }
         break;
     case call_func:
         printf_expr_list(expr->expr_list);
         break;
     case prefix_inc:
-        printf_expr(expr->left);
+        expr->type = plus;
+        expr->rigth = CreateExprINT(1);
         break;
     case prefix_dec:
-        printf_expr(expr->left);
+        expr->type = sub;
+        expr->rigth = CreateExprINT(1);
         break;
     case postfix_inc:
-        printf_expr(expr->left);
+        expr->type = plus;
+        expr->rigth = expr->left;
+        expr->left = CreateExprINT(1);
         break;
     case postfix_dec:
-        printf_expr(expr->left);
+        expr->type = sub;
+        expr->rigth = expr->left;
+        expr->left = CreateExprINT(1);
         break;
     case point:
         printf_expr(expr->left);
@@ -238,59 +289,223 @@ void check_expr(struct expression *expr) {
     case println:
         printf_expr_list(expr->expr_list);
         break;
-    case println_s:
-        printfHardString(expr->hString);
-        break;
     }
+    return isOk;
 }
 
-void check_if( struct nif *_nif ) {
-    check_expr(_nif->expr);
-    check_stmt(_nif->to_then);
-    check_stmt(_nif->to_else);
+bool check_if( struct nif *_nif ) {
+    bool isOk = true;
+    isOk = check_expr(_nif->expr);
+    isOk = isOk && check_stmt(_nif->to_then);
+    isOk = isOk && check_stmt(_nif->to_else);
+    return isOk;
 }
 
-void check_loop(struct loop* _loop) {
+bool check_loop(struct loop* _loop) {
+    bool isOk = true;
     switch (_loop->type) {
     case CICLE_FOR:
-        check_expr(_loop->expr_1);
-        check_expr(_loop->expr_2);
-        check_stmt(_loop->stmt);
+        isOk = check_expr(_loop->expr_1);
+        isOk = isOk && check_expr(_loop->expr_2);
+        isOk = isOk && check_stmt(_loop->stmt);
         break;
     case CICLE_WHILE:
-        check_expr(_loop->expr_while);
-        check_stmt(_loop->stmt);
+        isOk = check_expr(_loop->expr_while);
+        isOk = isOk && check_stmt(_loop->stmt);
         break;
     }
+    return isOk;
 }
 
-void check_var(struct nvar *var) {
-    check_id_list(var->id_list);
-    check_expr(var->result);
-    check_expr(var->return_value);
+bool check_var(struct nvar *var) {
+    bool isOk = true;
+    isOk = check_id_list(var->id_list);
+    isOk = isOk && check_expr(var->result);
+    isOk = isOk && check_expr(var->return_value);
+    return isOk;
 }
 
-void check_val(struct nval* val) {
-    check_id_list(val->ids_list);
+bool check_val(struct nval* val) {
+    bool isOk = true;
+    isOk = check_id_list(val->ids_list);
+    return isOk;
 }
 
-void check_func(struct nfunc *func) {
-    check_args(func->_args);ё
-    check_expr(func->return_var);
-    check_stmt(func->body);
+bool check_func(struct nfunc *func) {
+    bool isOk = true;
+    isOk = check_args(func->_args);
+    isOk = isOk && check_expr(func->return_var);
+    isOk = isOk && check_stmt(func->body);
+    return isOk;
 }
 
-void check_id_list(struct id_list *_id_list) {
+bool check_id_list(struct id_list *_id_list) {
     struct id_list *idList =_id_list;
-    while ( idList != NULL ) {
+    bool isOk = true;
+    while ( idList != NULL && isOk ) {
+        isOk = true;
         idList = idList->next;
     }
+    return isOk;
 }
 
-void check_args(struct nargs *_args) {
+bool check_args(struct nargs *_args) {
     struct narg *arg = _args->first;
-    while ( arg != NULL ) {
-        check_expr(arg->expr);
+    bool isOk = true;
+    while ( arg != NULL && isOk ) {
+        isOk = check_expr(arg->expr);
         arg = arg->next;
     }
+    return isOk;
+}
+
+
+struct Constant* addUtf8ToConstantsTable(char* utf8) {
+    struct Constant* constant = NULL;
+    bool found = false;
+    int size = list_size(constantsTable),
+            i = 0;
+    for (i = 0; !found && i < size; ++i) {
+        list_get_at(constantsTable, i, &constant);
+        if (constant->type == CONSTANT_Utf8 && !strcmp(constant->utf8, utf8)) {
+            found = true;
+        }
+        i++;
+    }
+    if (!found) {
+        constant = (struct Constant*) malloc(sizeof(struct Constant));
+        constant->type = CONSTANT_Utf8;
+        constant->utf8 = utf8;
+        constant->id = size + 1;
+        list_add(constantsTable, constant);
+    }
+    return constant;
+}
+
+struct Constant* addStringToConstantsTable(char* string) {
+    struct Constant* constant = NULL;
+    bool found = false;
+    struct Constant* constUtf8 = addUtf8ToConstantsTable(string);
+    int size = list_size(constantsTable),
+            i = 0;
+    for (i = 0; !found && i < size; ++i) {
+        list_get_at(constantsTable, i, &constant);
+        if (constant->type == CONSTANT_String && constant->const1 == constUtf8) {
+            found = true;
+        }
+        i++;
+    }
+    if (!found) {
+        constant = (struct Constant*) malloc(sizeof(struct Constant));
+        constant->type = CONSTANT_String;
+        constant->const1 = constUtf8;
+        constant->id = size + 1;
+        list_add(constantsTable, constant);
+    }
+    return constant;
+}
+
+struct Constant* addIntegerToConstantsTable(int value) {
+    struct Constant* constant = NULL;
+    bool found = false;
+    int size = list_size(constantsTable),
+            i = 0;
+    for (i = 0; !found && i < size; ++i) {
+        list_get_at(constantsTable, i, &constant);
+        if (constant->type == CONSTANT_Integer && constant->intValue == value) {
+            found = true;
+        }
+        i++;
+    }
+    if (!found) {
+        constant = (struct Constant*) malloc(sizeof(struct Constant));
+        constant->type = CONSTANT_Integer;
+        constant->intValue = value;
+        constant->id = size + 1;
+        list_add(constantsTable, constant);
+    }
+    return constant;
+}
+
+struct Constant* addFloatToConstantsTable(float value) {
+    struct Constant* constant = NULL;
+    bool found = false;
+    int size = list_size(constantsTable),
+            i = 0;
+    for (i = 0; !found && i < size; ++i) {
+        list_get_at(constantsTable, i, &constant);
+        if (constant->type == CONSTANT_Float && constant->floatValue == value) {
+            found = true;
+        }
+    }
+    if (!found) {
+        constant = (struct Constant*) malloc(sizeof(struct Constant));
+        constant->type = CONSTANT_Float;
+        constant->floatValue = value;
+        constant->id = size + 1;
+        list_add(constantsTable, constant);
+    }
+    return constant;
+}
+
+
+struct Constant* addClassToConstantsTable(char* className) {
+    struct Constant* constant = NULL;
+    struct Constant* classNameConst = addUtf8ToConstantsTable(className);
+    bool found = false;
+    int size = list_size(constantsTable),
+            i = 0;
+    for (i = 0; !found && i < size; ++i) {
+        list_get_at(constantsTable, i, &constant);
+        if (constant->type == CONSTANT_Class && constant->const1== classNameConst) {
+            found = true;
+        }
+    }
+    if (!found) {
+        constant = (struct Constant*) malloc(sizeof(struct Constant));
+        constant->type = CONSTANT_Class;
+        constant->const1 = classNameConst;
+        constant->id = size + 1;
+        list_add(constantsTable, constant);
+    }
+    return constant;
+}
+struct Constant* addNameAndTypeToConstantsTable(char* name, char* type) {
+
+    struct Constant* constant = NULL;
+    struct Constant* nameConst = addUtf8ToConstantsTable(name);
+    struct Constant* typeConst = addUtf8ToConstantsTable(type);
+    int size = list_size(constantsTable),
+            i = 0;
+    bool found = false;
+    for (i = 0; !found && i < size; ++i) {
+        list_get_at(constantsTable, i, &constant);
+        if (constant->type == CONSTANT_NameAndType && constant->const1 == nameConst && constant->const2 == typeConst) {
+            found = true;
+        }
+    }
+
+    if (!found) {
+        constant = (struct Constant*) malloc(sizeof(struct Constant));
+        constant->type = CONSTANT_NameAndType;
+        constant->const1 = nameConst;
+        constant->const2 = typeConst;
+        constant->id = size + 1;
+        list_add(constantsTable, constant);
+    }
+    return constant;
+}
+
+struct Constant* getConstantUtf8(char* utf8) {
+    struct Constant* constant = NULL;
+    int size = list_size(constantsTable),
+            i = 0;
+    bool found = false;
+    for (i = 0; !found && i < size; ++i) {
+        list_get_at(constantsTable, i, &constant);
+        if (constant->type == CONSTANT_Utf8 && !strcmp(utf8, constant->utf8)) {
+            found = true;
+        }
+    }
+    return constant;
 }

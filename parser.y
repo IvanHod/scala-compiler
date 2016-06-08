@@ -209,26 +209,14 @@ int yyerror(const char *msg);
         | func_args ',' ID ':' expr     { $$ = CreateFuncArgs( $1, $3, $5);                 }
         ;
 
-    decl_var: VAR ID ';'                { $$ = CreateDeclVar(NULL, $2, NULL);               }
-        | VAR id_list ';'               { $$ = CreateDeclVar($2, NULL, NULL);               }
-        | VAR ID '=' expr ';'           { $$ = CreateDeclVar(NULL, $2, $4);                 }
+    decl_var: VAR ID '=' expr ';'           { $$ = CreateDeclVar(NULL, $2, $4);             }
         | VAR id_list '=' expr ';'      { $$ = CreateDeclVar($2, NULL, $4);                 }
         | VAR ID ':' expr '=' expr ';'  { $$ = CreateDeclVarOfType(NULL, $2, $4, $6);       }
         | VAR id_list ':' expr '='
             expr ';'                    { $$ = CreateDeclVarOfType($2, NULL, $4, $6);       }
-        | VAR ID '=' NEW ARRAY '[' expr
-            ']' '(' expr ')' ';'        { $$ = CreateDeclVarArrayNew(NULL, $2, $7, $10);    }
-        | VAR id_list '=' NEW ARRAY '['
-            expr ']' '(' expr ')' ';'   { $$ = CreateDeclVarArrayNew($2, NULL, $7, $10);    }
-        | VAR ID '=' ARRAY '('
-            expr_list ')' ';'           { $$ = CreateDeclVarArray(NULL, $2, $6);            }
-        | VAR id_list '=' ARRAY '('
-            expr_list ')' ';'           { $$ = CreateDeclVarArray($2, NULL, $6);            }
         ;
 
-    decl_val: VAL ID ';'                { $$ = CreateDeclVal(NULL, $2, NULL);               }
-        | VAL id_list ';'               { $$ = CreateDeclVal($2, NULL, NULL);               }
-        | VAL ID '=' expr ';'           { $$ = CreateDeclVal(NULL, $2, $4);                 }
+    decl_val: VAL ID '=' expr ';'           { $$ = CreateDeclVal(NULL, $2, $4);                 }
         | VAL id_list '=' expr ';'      { $$ = CreateDeclVal($2, NULL, $4);                 }
         | VAL ID ':' expr '=' expr ';'  { $$ = CreateDeclValOfType(NULL, $2, $4, $6);       }
         | VAL id_list ':' expr '='

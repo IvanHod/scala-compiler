@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 #include "structs.h"
+#include "collection/list.h"
+#include "collection/hashtable.h"
 
 enum ConstantType {
     CONSTANT_Utf8 = 1,
@@ -62,15 +64,40 @@ struct Class {
     HashTable* methodsTable;
 };
 
-void check_stmt_list(struct statement_list *_stmt_list);
-void check_expr_list(struct expression_list *_expr_list);
-void check_stmt(struct statement *stmt);
-void check_expr(struct expression *expr);
-void check_if( struct nif *_nif );
-void check_var(struct nvar *var);
-void check_val(struct nval *val);
-void check_loop(struct loop* _loop);
-void check_id_list(struct id_list *_id_list);
-void check_args(struct nargs *_args);
+bool check_stmt_list(struct statement_list *_stmt_list);
+bool check_expr_list(struct expression_list *_expr_list);
+bool check_stmt(struct statement *stmt);
+bool check_expr(struct expression *expr);
+bool check_if( struct nif *_nif );
+bool check_var(struct nvar *var);
+bool check_val(struct nval *val);
+bool check_loop(struct loop* _loop);
+bool check_id_list(struct id_list *_id_list);
+bool check_args(struct nargs *_args);
+bool check_func(struct nfunc *func);
+
+
+struct Constant* addUtf8ToConstantsTable(char* utf8);
+struct Constant* addStringToConstantsTable(char* string);
+struct Constant* addIntegerToConstantsTable(int value);
+struct Constant* addFloatToConstantsTable(float value);
+struct Constant* addNameAndTypeToConstantsTable(char* name, char* type);
+struct Constant* addFieldRefToConstantsTable(char* fieldName, char* typeName);
+struct Constant* addMethodRefToConstantsTable(char* methodName, char* methodDescriptor);
+struct Constant* addClassToConstantsTable(char* className);
+struct Constant* getConstantUtf8(char* utf8);
+
+struct  Class* semanticClass;
+
+//node of list : struct Constant*
+List* constantsTable;
+
+//key: char*, value: Field*;
+HashTable* fieldsTable;
+
+//key: char*, value: struct Method* ;
+HashTable* methodsTable;
+
+struct Constant* constantClass;
 
 #endif
