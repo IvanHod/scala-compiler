@@ -165,7 +165,7 @@ struct expression_list *CreateExprList( struct expression_list *expr_list , stru
         expr_list->last = expr;
     } else {
         expr_list->last->next = expr;
-        expr_list = expr;
+        expr_list->last = expr;
     }
     return expr_list;
 }
@@ -422,6 +422,21 @@ struct nval* CreateDeclVal( struct id_list* idList, char* id, struct expression 
         _id_list->next = NULL;
     }
     node->ids_list                                                                                                                                                                                                                                                                                                                                                                                                                                                                           = _id_list;
+    node->expr = expr;
+    return node;
+}
+
+struct nval* CreateDeclValOfType( struct id_list* idList, char* id, struct expression * type, struct expression *expr) {
+    struct nval *node = (struct nval *)malloc(sizeof(struct nval));
+    struct id_list *_id_list = idList == NULL
+            ? (struct id_list *)malloc(sizeof(struct id_list))
+        : idList;
+    if( idList == NULL ) {
+        _id_list->id = id;
+        _id_list->next = NULL;
+    }
+    node->ids_list = _id_list;
+    node->return_value = type;
     node->expr = expr;
     return node;
 }

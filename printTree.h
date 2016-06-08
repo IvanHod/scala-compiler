@@ -137,7 +137,7 @@ void printf_if( struct nif *_nif) {
     if( _nif->to_then != NULL ) {
         printf_stmt(_nif->to_then);
     }
-    if( _nif->to_then != NULL ) {
+    if( _nif->to_else != NULL ) {
         printf_stmt(_nif->to_else);
     }
 }
@@ -172,9 +172,9 @@ void printf_var(struct nvar *var) {
     printf_id_list(var->id_list);
     printf_expr(var->result);
     printf_expr(var->return_value);
-    printf_expr_list(var->array_expr_list);
+    /*printf_expr_list(var->array_expr_list);
     printf_expr(var->array_expr_1);
-    printf_expr(var->array_expr_2);
+    printf_expr(var->array_expr_2);*/
     writeStr("</var>");
 }
 

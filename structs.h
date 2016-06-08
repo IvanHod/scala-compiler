@@ -172,7 +172,7 @@ struct nvar {
 struct nval {
     struct id_list *ids_list;
     struct expression *expr;
-    char *return_value;
+    struct expression *return_value;
 };
 
 struct nfunc {
@@ -212,6 +212,23 @@ struct one_case {
 struct match {
     struct expression *id;
     struct case_list *list;
+};
+
+/*------------------------------------ semantic structs ----------------------------------------- */
+
+enum TypeNames {
+    IDENTIFIER_TYPE_NAME,
+    FLOAT32_TYPE_NAME,
+    INT_TYPE_NAME,
+    STRING_TYPE_NAME,
+    BOOL_TYPE_NAME,
+    VOID_TYPE_NAME,
+    UNKNOWN_TYPE
+};
+
+struct SemanticType {
+    enum TypeNames typeName;
+    int idNum;
 };
 
 #endif

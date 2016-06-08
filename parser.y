@@ -230,6 +230,9 @@ int yyerror(const char *msg);
         | VAL id_list ';'               { $$ = CreateDeclVal($2, NULL, NULL);               }
         | VAL ID '=' expr ';'           { $$ = CreateDeclVal(NULL, $2, $4);                 }
         | VAL id_list '=' expr ';'      { $$ = CreateDeclVal($2, NULL, $4);                 }
+        | VAL ID ':' expr '=' expr ';'  { $$ = CreateDeclValOfType(NULL, $2, $4, $6);       }
+        | VAL id_list ':' expr '='
+            expr ';'                    { $$ = CreateDeclValOfType($2, NULL, $4, $6);       }
         ;
 
     id_list: ID ',' ID                  { $$ = CreateIdList(NULL, $1, $3);                  }
