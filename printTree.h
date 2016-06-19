@@ -19,6 +19,8 @@ void printf_func(struct nfunc*);
 void printf_class(struct nclass*);
 void printf_id_list(struct id_list *id_list);
 void printf_args(struct nargs *args);
+void printf_match(struct match * _match);
+void printfHardString(struct hardString *str);
 
 void writeStr(char* str_1) {
     fwrite(str_1, strlen(str_1), 1, writeFile);
@@ -34,7 +36,7 @@ char* strcat_2(char* str_1, char* str_2) {
 char* strcat_3(char* str_1, char* str_2, char* str_3) {
     char *result = (char *)malloc(sizeof(str_1) + sizeof(str_2) + sizeof(str_3));
     strcpy(result, str_1);
-    if( strlen(str_2) > 0 )
+    if( str_2 != NULL && strlen(str_2) > 0 )
         strcat(result, str_2);
     if( strlen(str_3) > 0 )
         strcat(result, str_3);
@@ -49,6 +51,7 @@ void printf_root() {
 }
 
 void printf_stmt_list(struct statement_list *_stmt_list) {
+    if( _stmt_list == NULL ) return;
     writeStr("<statement_list>");
     struct statement *stmt = _stmt_list->first;
     while ( stmt != NULL ) {
@@ -72,6 +75,8 @@ void printf_stmt(struct statement *stmt) {
     case NIF:
         writeStr("<statement type=\"if\">");
         printf_if(stmt->_if);
+        break;
+    case NIF_LOOP:
         break;
     case LOOP   :
         writeStr("<statement type=\"loop\">");
@@ -169,7 +174,7 @@ void printf_loop(struct loop* _loop) {
 
 void printf_var(struct nvar *var) {
     writeStr( "<var>");
-    printf_id_list(var->id_list);
+    printf_id_list(var->idList);
     printf_expr(var->result);
     printf_expr(var->return_value);
     /*printf_expr_list(var->array_expr_list);
@@ -224,6 +229,8 @@ void printf_expr(struct expression *expr) {
     case String:
         writeStr( strcat_3("<expression type=\"const_string\" value=\"", expr->String, "\">"));
         break;
+    case HardString:
+            break;
     case Null:
         writeStr("<expression type=\"NULL\">");
         break;
@@ -412,7 +419,7 @@ void printfHardString(struct hardString *str) {
 
 void printf_id_list(struct id_list *_id_list) {
     writeStr("<id_list>");
-    struct id_list *idList =_id_list;
+    struct id_in_list *idList =_id_list->first;
     while ( idList != NULL ) {
         writeStr(strcat_3("<id value=\"", idList->id, "\"/>"));
         idList = idList->next;
@@ -421,6 +428,7 @@ void printf_id_list(struct id_list *_id_list) {
 }
 
 void printf_args(struct nargs *_args) {
+    if( _args == NULL ) return;
     struct narg *arg = _args->first;
     while ( arg != NULL ) {
         writeStr( strcat_3("<arg id=\"", arg->id, "\">"));

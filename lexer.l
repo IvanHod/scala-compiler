@@ -1,7 +1,7 @@
 %option noyywrap never-interactive
 
 %top {
-    //#pragma warning(disable: 4996)
+
     #include <stdio.h>
     #include <stdlib.h>
     #include "bison.h"
@@ -9,14 +9,13 @@
     extern int yyparse(void);
     char * formText(char* str);
 
+    extern char simbol;
+    extern char string[200];
+    extern char multistring[500];
 
-    extern simbol;
-    extern string[200];
-    extern multistring[500];
-
-    extern left_string[200];
-    extern right_string[200];
-    extern isLeftIsString;
+    extern char left_string[200];
+    extern char right_string[200];
+    int isLeftIsString;
 }
 
 %{

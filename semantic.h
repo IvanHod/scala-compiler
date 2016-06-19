@@ -1,10 +1,11 @@
 #ifndef SEMANTIC
 #define SEMANTIC
 
-#include <stdbool.h>
+#include <stdio.h>
 #include "structs.h"
 #include "collection/list.h"
 #include "collection/hashtable.h"
+#include "func.h"
 
 enum ConstantType {
     CONSTANT_Utf8 = 1,
@@ -51,7 +52,7 @@ struct Method {
     //key: varname, value : LocalVariable
     struct SemanticType* returnType;
     List* localVariablesTable;
-    struct ParameterList* paramList;
+    struct nargs* paramList;
 };
 
 struct Class {
@@ -64,18 +65,30 @@ struct Class {
     HashTable* methodsTable;
 };
 
-bool check_stmt_list(struct statement_list *_stmt_list);
-bool check_expr_list(struct expression_list *_expr_list);
-bool check_stmt(struct statement *stmt);
-bool check_expr(struct expression *expr);
-bool check_if( struct nif *_nif );
-bool check_var(struct nvar *var);
-bool check_val(struct nval *val);
-bool check_loop(struct loop* _loop);
-bool check_id_list(struct id_list *_id_list);
-bool check_args(struct nargs *_args);
+bool doSemantic(struct Root* root);
+bool check_stmt_list(struct statement_list *_stmt_list, struct Method* method);
+bool check_expr_list(struct expression_list *_expr_list, struct Method* method);
+bool check_stmt(struct statement *stmt, struct Method* method);
+bool check_expr(struct expression *expr, struct Method* method);
+bool check_if( struct nif *_nif, struct Method* method);
+bool check_var(struct nvar *var, struct Method* method);
+bool check_val(struct nval *val, struct Method* method);
+bool check_loop(struct loop* _loop, struct Method* method);
+bool check_args(struct nargs *_args, struct Method* method, char* functionName);
 bool check_func(struct nfunc *func);
 
+//bool addLocalVariableToTable(struct VarDecl* varDecl, struct Method* method);
+struct LocalVariable* findActiveLocalVariableByScope(List* variablesTable, char* varName, int scope);
+//for tree printing purpose
+struct LocalVariable* findLocalVariableByScope(List* variablesTable, char* varName, int scope);
+struct LocalVariable* findActiveLocalVariableById(List* variablesTable, char* varName);
+struct LocalVariable* addVariableToLocalVarsTable(char* id, struct SemanticType* type, struct Method* method, bool isMutable);
+bool addVarSpecToLocalVarsTable(struct nvar* varSpec, struct Method* method);
+bool addConstSpecToLocalVarsTable(struct nval* constSpec, struct Method* method);
+bool addConstantToLocalConstantTable(char* constName, HashTable* localConstTable, struct Method* method);
+bool addParamToLocalVarsTable(char* paramName, struct SemanticType* type, struct Method* method);
+void deactivateLocalVariablesByScope(List* localVariablesTable, int scope);
+bool isContainStatementType(struct statement_list* stmtList, enum statement_type stmtType);
 
 struct Constant* addUtf8ToConstantsTable(char* utf8);
 struct Constant* addStringToConstantsTable(char* string);
@@ -86,6 +99,18 @@ struct Constant* addFieldRefToConstantsTable(char* fieldName, char* typeName);
 struct Constant* addMethodRefToConstantsTable(char* methodName, char* methodDescriptor);
 struct Constant* addClassToConstantsTable(char* className);
 struct Constant* getConstantUtf8(char* utf8);
+
+char* createMethodDescriptor(struct nargs* paramList, char* returnTypeStr);
+char* convertTypeToString(struct SemanticType* type);
+
+struct Field* getField(struct Class* _class, char* fieldName);
+struct Method* getMethod(char* methodName);
+struct SemanticType* getFunctionReturnType(struct nfunc* functionDecl, struct Method* method);
+
+void printLocalVariablesTable(struct Method* method);
+void printConstantsTable();
+void printMethodsTable();
+void printConstant(struct Constant* constant);
 
 struct  Class* semanticClass;
 

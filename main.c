@@ -1,10 +1,11 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include "semantic.h"
 #include "lexer.h"
 #include "bison.h"
 #include "structs.h"
-#include <string.h>
 #include "printTree.h"
-#include <stdbool.h>
 
 #define PATH_TO_DIR "/home/ivan/qt-creator-projects/scala-compiler/tests/"
 #define COUNT_TEST 1
@@ -35,11 +36,11 @@ int main(int argc, char *argv[])
 {
     char files[COUNT_TEST][30] = {
         //"declaration_vars.txt",
-        //"arithmetical_operations.txt"
+        "arithmetical_operations.txt"
         //"logical_operation.txt",
         //"if_statements.txt"
         //"loop.txt",
-        "functions.txt",
+        //"functions.txt",
         //"classes.txt",
         //"printf.txt"
         //"objects.txt"
@@ -52,7 +53,6 @@ int main(int argc, char *argv[])
         FILE *file = fopen( file_path, "r");
         if( isOpenFile(file, files[i] ) ) {
             yyin = file;
-
             yyparse();
             char writeFile_path[100] = PATH_TO_DIR;
             strcat(writeFile_path, replace( files[i], ".txt", ".xml") );
@@ -61,6 +61,10 @@ int main(int argc, char *argv[])
                 printf_root();
                 fclose(writeFile);
             }
+            printf("\nBegin semantic analize\n");
+            if( !doSemantic(root) )
+                printf("\nSemantic not complite\n");
+
         }
     }
     return 0;

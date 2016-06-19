@@ -16,7 +16,8 @@ SOURCES += main.c \
     collection/slist.c \
     collection/stack.c \
     collection/treeset.c \
-    collection/treetable.c
+    collection/treetable.c \
+    func.c
 
 HEADERS += \
     lexer.h \

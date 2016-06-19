@@ -70,6 +70,7 @@ struct expression {
     char *String;
     struct hardString *hString;
     struct expression *next;
+    struct SemanticType* semanticType;
 };
 
 struct expression_list {
@@ -161,7 +162,7 @@ struct loop {
 };
 
 struct nvar {
-    struct id_list    *id_list;
+    struct id_list    *idList;
     struct expression *return_value;
     struct expression *result;
     struct expression *array_expr_1;
@@ -177,7 +178,7 @@ struct nval {
 
 struct nfunc {
     char *name;
-    struct args *_args;
+    struct nargs *_args;
     struct expression *return_var;
     struct statement *body;
 };
@@ -194,8 +195,13 @@ struct nobject {
 };
 
 struct id_list {
+    struct id_in_list *first;
+    struct id_in_list *last;
+};
+
+struct id_in_list {
     char* id;
-    struct id_list *next;
+    struct id_in_list *next;
 };
 
 struct case_list {
