@@ -4,6 +4,46 @@ char* CLASS_NAME = "GO_CLASS";
 int scope = 0,
     i = 0;
 
+
+struct Constant* constantCode;
+struct Constant* constantClassString;
+struct Constant* objectConstructorMethodRef;
+struct Constant* constantObjectClass;
+struct Constant* constantSourceFile;
+struct Constant* constantSourceFileName;
+
+struct Constant* constantClassRuntimeLib;
+struct Constant* printStringMethodRef;
+struct Constant* printIntegerMethodRef;
+struct Constant* printFloatMethodRef;
+struct Constant* openSquareParenthesis;
+struct Constant* closeSquareParenthesis;
+struct Constant* space;
+
+struct Constant* constantClassMixed;
+struct Constant* mixedInitMethodRef;
+struct Constant* mixedAddMethodRef;
+struct Constant* mixedEquallyMethodRef;
+struct Constant* mixedPrintMethodRef;
+struct Constant* mixedSetIntMethodRef;
+struct Constant* mixedSetBoolMethodRef;
+struct Constant* mixedSetFloatMethodRef;
+struct Constant* mixedSetStringMethodRef;
+struct Constant* mixedGetIntMethodRef;
+struct Constant* mixedGetBoolMethodRef;
+struct Constant* mixedGetFloatMethodRef;
+struct Constant* mixedGetStringMethodRef;
+
+struct Constant* mixedAddMethodRef;
+struct Constant* mixedSubMethodRef;
+struct Constant* mixedMulMethodRef;
+struct Constant* mixedDivMethodRef;
+struct Constant* mixedEquallyMethodRef;
+struct Constant* mixedNotEquallyMethodRef;
+struct Constant* mixedNotMethodRef;
+struct Constant* mixedMoreMethodRef;
+struct Constant* mixedLessMethodRef;
+
 bool doSemantic(struct Root* root) {
     //create class to wrap programm
     semanticClass = (struct Class*)malloc(sizeof(struct Class));
@@ -20,10 +60,31 @@ bool doSemantic(struct Root* root) {
     hashtable_new(&methodsTable);
     semanticClass->methodsTable = methodsTable;
 
+    //add object class and it's init method to constants table
+    constantObjectClass = addObjectClassToConstantsTable();
+
+    //add Code constants table
+    constantCode = addUtf8ToConstantsTable("Code");
+
     //add CLASS's name to constantsTAble
     addUtf8ToConstantsTable(root->id);
+
     //add class to constants table
     constantClass = addClassToConstantsTable(root->id);
+
+    //add constant type string
+    constantClassString = addClassToConstantsTable("java/lang/String");
+
+    //add addition constants to print string
+    openSquareParenthesis = addStringToConstantsTable("[");
+    closeSquareParenthesis = addStringToConstantsTable("]");
+    space = addStringToConstantsTable(" ");
+
+    addRuntimeLibConstant();
+    addMidexLibConstant();
+
+    constantSourceFile = addUtf8ToConstantsTable("SourceFile");
+    constantSourceFileName = addUtf8ToConstantsTable("HelloWorld.java");
 
     bool isOk = true;
     struct statement* stmt = root->stmt_list->first;
@@ -33,7 +94,7 @@ bool doSemantic(struct Root* root) {
         stmt = stmt->next;
     }
     if( isOk ) {
-        printConstantsTable();
+       printConstantsTable();
     }
     return isOk;
 }
@@ -86,7 +147,7 @@ bool check_stmt(struct statement *stmt, struct Method* method) {
         isOk = check_func(stmt->to_print_func);
         break;
     case NMATCH :
-
+        isOk = check_switch(stmt->to_print_match, method);
         break;
     default: break;
     }
@@ -136,30 +197,44 @@ bool check_expr(struct expression *expr, struct Method* method) {
         }
         break;
     }
-    case Int:
+    case Int: {
         type->typeName = INT_TYPE_NAME;
         expr->semanticType = type;
-        addIntegerToConstantsTable(expr->Int);
+        struct Constant* constant = addIntegerToConstantsTable(expr->Int);
+        type->constantExpressionNum = constant->id;
         break;
-    case Bool:
+    }
+    case Bool: {
         type->typeName = BOOL_TYPE_NAME;
         expr->semanticType = type;
-        addIntegerToConstantsTable(expr->boolean);
+        struct Constant* constant = addBooleanToConstantsTable(expr->boolean);
+        type->constantExpressionNum = constant->id;
         break;
-    case Float:
+    }
+    case Float: {
         type->typeName = FLOAT32_TYPE_NAME;
         expr->semanticType = type;
-        addFloatToConstantsTable(expr->Float);
+        struct Constant* constant = addFloatToConstantsTable(expr->Float);
+        type->constantExpressionNum = constant->id;
         break;
+    }
     case Char:
         type->typeName = CHAR_TYPE_NAME;
         expr->semanticType = type;
         break;
-    case String:
+    case String: {
         type->typeName = STRING_TYPE_NAME;
         expr->semanticType = type;
-        addStringToConstantsTable(expr->String);
+        struct Constant* constant = addStringToConstantsTable(expr->String);
+        type->constantExpressionNum = constant->id;
         break;
+    }
+    case Type: {
+        type->typeName = STRING_TYPE_NAME;
+        type->isArray = true;
+        expr->left = NULL;
+        break;
+    }
     case assigment:
         isOk = check_expr(expr->left, method);
         if(isOk) {
@@ -168,8 +243,12 @@ bool check_expr(struct expression *expr, struct Method* method) {
                 isOk = false;
                 printf("Semantic error: var %s is const.", expr->left->String);
             }
-            if(isOk) {
+            if( isOk ) {
                 isOk = check_expr(expr->rigth, method);
+                if( expr->rigth->semanticType->typeName != expr->left->semanticType->typeName) {
+                    printf("Semantic error: left and right types of vars must to coincide");
+                    isOk = false;
+                }
                 if(isOk) {
                     type->typeName = expr->rigth->semanticType->typeName;
                     type->idNum = expr->rigth->semanticType->idNum;
@@ -186,16 +265,7 @@ bool check_expr(struct expression *expr, struct Method* method) {
                 type->typeName = BOOL_TYPE_NAME;
             } else {
                 isOk = false;
-                if(expr->left->type == id)
-                    printf("Semantic error: unary ! is not member var of %s",expr->left->String );
-                else if(expr->left->type == Int)
-                    printf("Semantic error: unary ! can not to use with %d: ",expr->left->Int );
-                else if(expr->left->type == Float)
-                    printf("Semantic error: unary ! can not to use with %f: ",expr->left->Float );
-                else if(expr->left->type == Char)
-                    printf("Semantic error: unary ! can not to use with %c: ",expr->left->Char );
-                else if(expr->left->type == String)
-                    printf("Semantic error: unary ! can not to use with %s: ",expr->left->String );
+                printf("Semantic error. Operand must be bool type");
             }
         }
         break;
@@ -265,7 +335,7 @@ bool check_expr(struct expression *expr, struct Method* method) {
             } else if( leftType == CHAR_TYPE_NAME && rightType == CHAR_TYPE_NAME)
                 type->typeName = INT_TYPE_NAME;
             else {
-                printf("Error: variable types %s and %s not incompatible", expr->left->String, expr->rigth->String);
+                printf("Semantic error: variable types %s and %s not incompatible", expr->left->String, expr->rigth->String);
                 isOk = false;
             }
         }
@@ -284,6 +354,17 @@ bool check_expr(struct expression *expr, struct Method* method) {
     case more_eq:
     case less:
     case less_eq:
+        isOk = check_expr(expr->left, method);
+        isOk = isOk && check_expr(expr->rigth, method);
+        if(isOk) {
+            type->typeName = BOOL_TYPE_NAME;
+            if(expr->left->semanticType->typeName != expr->rigth->semanticType->typeName) {
+                type->typeName = UNKNOWN_TYPE;
+                isOk = false;
+                printf("Semantic error. Left and right operands of comparation should be same type");
+            }
+        }
+        break;
     case unarOR:
     case _or:
     case unarXOR:
@@ -294,9 +375,15 @@ bool check_expr(struct expression *expr, struct Method* method) {
         isOk = isOk && check_expr(expr->rigth, method);
         if(isOk) {
             type->typeName = BOOL_TYPE_NAME;
+            if( expr->left->semanticType->typeName != BOOL_TYPE_NAME) {
+                printf("Semantic error: operands (left) of logical operation must be bool.");
+                isOk = false;
+            }
+            if(isOk && expr->rigth->semanticType->typeName != BOOL_TYPE_NAME ) {
+                printf("Semantic error: operands (right) of logical operation must be bool." );
+                isOk = false;
+            }
         }
-        break;
-    case call_func:
         break;
     case prefix_inc:
         expr->type = plus;
@@ -324,6 +411,31 @@ bool check_expr(struct expression *expr, struct Method* method) {
         type = NULL;
         isOk = check_expr(expr, method);
         break;
+    case call_func:
+        expr->expr_list;
+        char* methodName = expr->String;
+        struct Method* calledMethod = getMethod(methodName);
+        if (calledMethod != NULL) {
+            bool isOk = check_call_func(expr->expr_list, calledMethod->paramList,  method);
+            if (isOk) {
+                type = calledMethod->returnType;
+                type->typeName = calledMethod->returnType->typeName;
+            }
+        }
+        else {
+            printf("Semantic error. Method %s not declared\n", methodName);
+            type->typeName = UNKNOWN_TYPE;
+            isOk = false;
+        }
+        break;
+    case println: {
+        struct expression *simpleExpr = expr->expr_list->first;
+        while(isOk && simpleExpr != NULL) {
+            isOk = check_expr(simpleExpr, method);
+            simpleExpr = simpleExpr->next;
+        }
+        break;
+    }
     case point:
         break;
     default: break;
@@ -334,10 +446,77 @@ bool check_expr(struct expression *expr, struct Method* method) {
 }
 
 bool check_if( struct nif *_nif, struct Method* method) {
+    if( method == NULL) {
+        printf("if must be used in body of function.");
+        return false;
+    }
     bool isOk = true;
     isOk = check_expr(_nif->expr, method);
-    isOk = isOk && check_stmt(_nif->to_then, method);
-    isOk = isOk && check_stmt(_nif->to_else, method);
+    struct SemanticType* semanticType = _nif->expr->semanticType;
+    if (semanticType->typeName != BOOL_TYPE_NAME) {
+        if (semanticType->typeName != UNKNOWN_TYPE) {
+            printf("Semantic error. Non bool used as if condition\n");
+        }
+        isOk = false;
+    }
+    else {
+        scope++;
+        isOk = isOk && check_stmt(_nif->to_then, method);
+        deactivateLocalVariablesByScope(method->localVariablesTable, scope);
+        if( _nif->to_else != NULL ) {
+            isOk = isOk && check_stmt(_nif->to_else, method);
+            deactivateLocalVariablesByScope(method->localVariablesTable, scope);
+        }
+        scope--;
+    }
+    return isOk;
+}
+
+bool check_switch(struct match* switchStmt, struct Method*  method) {
+    if( method == NULL) {
+        printf("switch must be used in body of function.");
+        return false;
+    }
+    bool isOk = check_expr(switchStmt->id, method);
+    if( isOk ) {
+        struct SemanticType *type = switchStmt->id->semanticType;
+        struct one_case *_case = switchStmt->list->first;
+        while( isOk && _case != NULL ) {
+            if( _case != switchStmt->list->last ) {
+                isOk = check_expr(_case->condition, method);
+                if(_case->condition->type != id && _case->condition->type != Int && _case->condition->type != Bool
+                        && _case->condition->type != Char && _case->condition->type != String && _case->condition->type != Float) {
+                    printf("Semantic error: type in case must be to famous or variable");
+                    isOk = false;
+                }
+                if(isOk && type->typeName != _case->condition->semanticType->typeName ) {
+                    printf("Semantic error: type match and case must be equivalent");
+                    isOk = false;
+                }
+                if( isOk ) {
+                    isOk = check_expr(_case->perfomance, method);
+                }
+            } else {
+                if(_case->condition->type != id && _case->condition->type != Int && _case->condition->type != Bool
+                        && _case->condition->type != Char && _case->condition->type != String && _case->condition->type != Float) {
+                    printf("Semantic error: type in case must be to famous or variable");
+                    isOk = false;
+                }
+                if( isOk && (_case->condition->type == id && strcmp(_case->condition->String, "_") || _case->condition->type != id) ) {
+                    isOk = check_expr(_case->condition, method);
+                    if(isOk && type->typeName != _case->condition->semanticType->typeName) {
+                        printf("Semantic error: type match and case must be equivalent");
+                        isOk = false;
+                    }
+                }
+                if( isOk ) {
+                    isOk = check_expr(_case->perfomance, method);
+                }
+            }
+            if( isOk )
+                _case = _case->next;
+        }
+    }
     return isOk;
 }
 
@@ -421,6 +600,10 @@ bool check_func(struct nfunc *func) {
                 return false;
             }
         }
+        if (func->body == NULL) {
+            printf("Body of function %s not found", func->name);
+            return false;
+        }
 
         struct SemanticType* semanticReturnType = getFunctionReturnType(func, method);
         if (semanticReturnType->typeName == UNKNOWN_TYPE) {
@@ -428,10 +611,6 @@ bool check_func(struct nfunc *func) {
             return false;
         }
 
-        if (func->body == NULL) {
-            printf("Body of function %s not found", func->name);
-            return false;
-        }
         //add return type to constant table
         char* returnTypeStr = convertTypeToString(semanticReturnType);
         ///addUtf8ToConstantsTable(returnTypeStr);
@@ -444,6 +623,7 @@ bool check_func(struct nfunc *func) {
         method->constMethodref = constMethodRef;
         method->returnType = semanticReturnType;
         method->paramList = paramList;
+        method->functionDecl = func;
 
         hashtable_add(methodsTable, func->name, method);
 
@@ -473,9 +653,54 @@ bool check_func(struct nfunc *func) {
                 }
             }
         }
-        isOk = isOk && check_stmt(func->body, method);
+        if ( !check_stmt_list(func->body, method) )
+            return false;
+        // if it is function, check type last str with return type;
+        if( func->isFunction ) {
+            //semanticReturnType
+            if(func->body->last->expr_list->first->semanticType->typeName != semanticReturnType->typeName) {
+                printf("real return value of function %s is different from prototype", func->name);
+                isOk = false;
+            }
+        }
     } else {
+        printf("Function with the same name as %s has been define\n", func->name);
+        isOk = false;
+    }
+    return isOk;
+}
 
+bool check_call_func(struct expression_list *exprList, struct nargs* paramList, struct Method* method) {
+    if( method == NULL) {
+        printf("call function must be used in body of function.");
+        return false;
+    }
+    bool isOk = true;
+    if (exprList != NULL && paramList == NULL || exprList == NULL && paramList != NULL) {
+        printf("Semantic error. Formal parameter count and parameter count mismatch\n");
+        isOk = false;
+    }
+    else if (exprList != NULL && paramList != NULL) {
+        if (exprList->size != paramList->size) {
+            printf("Semantic error. Formal parameter count and parameter count mismatch\n");
+            isOk = false;
+        }
+        else {
+            struct expression* expr = exprList->first;
+            struct narg* param = paramList->first;
+            while (expr != NULL && isOk) {
+                //call check expression type to define type
+                isOk = isOk && check_expr(expr, method);
+                if ( expr->semanticType->typeName != param->expr->semanticType->typeName) {
+                    printf("Semantic error. Formal paramter's type and declared parameter's type of %s mismatch\n", param->id);
+                    isOk = false;
+                }
+                if (isOk) {
+                    expr = expr->next;
+                    param = param->next;
+                }
+            }
+        }
     }
     return isOk;
 }
@@ -495,11 +720,20 @@ bool check_args(struct nargs *_args, struct Method* method, char* functionName) 
 struct  SemanticType*  getFunctionReturnType(struct nfunc* functionDecl, struct Method* method) {
     struct SemanticType* semanticType = (struct SemanticType*) malloc(sizeof(struct SemanticType));
     semanticType->typeName = UNKNOWN_TYPE;
-    if (functionDecl->return_var != NULL) {
-        check_expr(functionDecl->return_var, method);
-        semanticType->typeName = functionDecl->return_var->semanticType->typeName;
-    }
-    else {
+    if( functionDecl->isFunction ) {
+        // must be return type
+        if (functionDecl->return_var != NULL) {
+            check_expr(functionDecl->return_var, method);
+            semanticType->typeName = functionDecl->return_var->semanticType->typeName;
+        }
+        else {
+            // type of last stmt.
+            if( functionDecl->body->last->expr_list->first->semanticType != NULL ) {
+                semanticType->typeName = functionDecl->body->last->expr_list->first->semanticType->typeName;
+                semanticType->idNum = functionDecl->body->last->expr_list->first->semanticType->idNum;
+            }
+        }
+    } else {
         semanticType->typeName = VOID_TYPE_NAME;
     }
     return semanticType;
@@ -507,6 +741,17 @@ struct  SemanticType*  getFunctionReturnType(struct nfunc* functionDecl, struct 
 
 
 /* ----------------------------------------------- functions to work with local vars --------------------------- */
+
+void deactivateLocalVariablesByScope(List* localVariablesTable, int scope) {
+    struct LocalVariable* variable = NULL;
+    int size = list_size(localVariablesTable);
+    for (i = 0; i < size; ++i) {
+        list_get_at(localVariablesTable, i, &variable);
+        if (variable->scope == scope && variable->isActive) {
+            variable->isActive = false;
+        }
+    }
+}
 
 struct LocalVariable* findActiveLocalVariableByScope(List* variablesTable, char* varName, int scope) {
     struct LocalVariable* result = (struct LocalVariable*) malloc(sizeof(struct LocalVariable));
@@ -588,7 +833,7 @@ bool addVarSpecToLocalVarsTable(struct nvar* varSpec, struct Method* method) {
         addUtf8ToConstantsTable(id->id);
         isOk = variable != NULL;
         if (isOk) {
-            //id->idNum = variable->id; не знаю зачем
+            id->idNum = variable->id;
             id = id->next;
         }
     }
@@ -622,8 +867,9 @@ bool addParamToLocalVarsTable(char* paramName, struct SemanticType* semanticType
         localVariable = (struct LocalVariable*)malloc(sizeof(struct LocalVariable));
         localVariable->name = paramName;
         localVariable->semanticType = semanticType;
-        localVariable->id = list_size(variablesTable) + 1;
+        localVariable->id = list_size(variablesTable);// !TODO if dinamic, then + 1;
         localVariable->scope = 1;
+        localVariable->isActive = true;
         list_add(variablesTable, localVariable);
     }
     else {
@@ -640,7 +886,7 @@ struct LocalVariable* addVariableToLocalVarsTable(char* id, struct SemanticType*
     } else {
         if (findActiveLocalVariableByScope(method->localVariablesTable, id, scope) == NULL) {
             localVariable = (struct LocalVariable*) malloc(sizeof(struct LocalVariable));
-            localVariable->id = list_size(method->localVariablesTable) + 1;
+            localVariable->id = list_size(method->localVariablesTable);// !TODO if dinamic, then  +1
             localVariable->scope = scope;
             localVariable->name = id;
             localVariable->isActive = true;
@@ -673,18 +919,37 @@ struct Field* getField(struct Class* class, char* fieldName) {
 
 char* convertTypeToString(struct SemanticType* type) {
     //non array variable
-    switch (type->typeName) {
-    case STRING_TYPE_NAME:
-        return "Ljava/lang/String;";
-    case INT_TYPE_NAME:
-        return "I";
-    case FLOAT32_TYPE_NAME:
-        return "F";
-    case VOID_TYPE_NAME:
-        return "V";
-    default:
-        return "UNKNOWN";
-    }
+    if (type->isArray) {
+            switch (type->typeName) {
+            case STRING_TYPE_NAME:
+                return "[Ljava/lang/String;";
+            case INT_TYPE_NAME:
+                return "[I";
+            case FLOAT32_TYPE_NAME:
+                return "[F";
+            case VOID_TYPE_NAME:
+                return "[V";
+            default:
+                return "UNKNOWN";
+            }
+        }
+        else {
+            //non array variable
+            switch (type->typeName) {
+            case STRING_TYPE_NAME:
+                return "Ljava/lang/String;";
+            case INT_TYPE_NAME:
+                return "I";
+            case BOOL_TYPE_NAME:
+                return "B";
+            case FLOAT32_TYPE_NAME:
+                return "F";
+            case VOID_TYPE_NAME:
+                return "V";
+            default:
+                return "UNKNOWN";
+            }
+        }
 }
 
 //Here, propose that the semantic of  param list has been check
@@ -702,6 +967,7 @@ char* createMethodDescriptor(struct nargs* paramList, char* returnTypeStr) {
         while (param != NULL) {
             struct SemanticType* semanticType = (struct SemanticType*)malloc(sizeof(struct SemanticType));
             semanticType->typeName = param->expr->semanticType->typeName;
+            semanticType->isArray = param->expr->semanticType->isArray;
             char* typeNameStr = convertTypeToString(semanticType);
             strcpy(ptr, typeNameStr);
             ptr += strlen(typeNameStr);
@@ -772,6 +1038,26 @@ struct Constant* addIntegerToConstantsTable(int value) {
         constant = (struct Constant*) malloc(sizeof(struct Constant));
         constant->type = CONSTANT_Integer;
         constant->intValue = value;
+        constant->id = size + 1;
+        list_add(constantsTable, constant);
+    }
+    return constant;
+}
+
+struct Constant* addBooleanToConstantsTable(bool value) {
+    struct Constant* constant = NULL;
+    bool found = false;
+    int size = list_size(constantsTable);
+    for (i = 0; !found && i < size; ++i) {
+        list_get_at(constantsTable, i, &constant);
+        if (constant->type == CONSTANT_Boolean && constant->boolValue == value) {
+            found = true;
+        }
+    }
+    if (!found) {
+        constant = (struct Constant*) malloc(sizeof(struct Constant));
+        constant->type = CONSTANT_Boolean;
+        constant->boolValue = value;
         constant->id = size + 1;
         list_add(constantsTable, constant);
     }
@@ -981,4 +1267,100 @@ void printMethodsTable() {
         printLocalVariablesTable(method);
     }
 }
+
+struct Constant* addObjectClassToConstantsTable() {
+    //Add class's metadata to constants table
+    char* constructorName = "<init>";
+    struct Constant* constructorConstant = addUtf8ToConstantsTable(constructorName);
+    char* constructorTypeStr = "()V";
+    struct Constant* constructorType = addUtf8ToConstantsTable(constructorTypeStr);
+    struct Constant* constructorNameAndType =
+        addNameAndTypeToConstantsTable(constructorName, constructorTypeStr);
+    char* objectClassName = "java/lang/Object";
+    struct Constant* objectClassUtf8 = addUtf8ToConstantsTable(objectClassName);
+    struct Constant* constantObjectClass = addClassToConstantsTable(objectClassName);
+    objectConstructorMethodRef = (struct Constant*) malloc(sizeof(struct Constant));
+    int size = list_size(constantsTable);
+    //add method ref to constants table
+    objectConstructorMethodRef->type = CONSTANT_Methodref;
+    objectConstructorMethodRef->const1 = constantObjectClass;
+    objectConstructorMethodRef->const2 = constructorNameAndType;
+    objectConstructorMethodRef->id = size + 1;
+    list_add(constantsTable, objectConstructorMethodRef);
+
+    return constantObjectClass;
+}
+
+void addRuntimeLibConstant() {
+    constantClassRuntimeLib = addClassToConstantsTable("RuntimeLib");
+    struct Constant* printStringNameAndType = addNameAndTypeToConstantsTable("printString", "(Ljava/lang/String;)V");
+    struct Constant* printIntegerNameAndType = addNameAndTypeToConstantsTable("printInteger", "(I)V");
+    struct Constant* printFloatNameAndType = addNameAndTypeToConstantsTable("printFloat", "(F)V");
+
+    printStringMethodRef = addConstantMethodRefToConstantTable(constantClassRuntimeLib, printStringNameAndType);
+    printIntegerMethodRef = addConstantMethodRefToConstantTable(constantClassRuntimeLib, printIntegerNameAndType);
+    printFloatMethodRef = addConstantMethodRefToConstantTable(constantClassRuntimeLib, printFloatNameAndType);
+}
+
+void addMidexLibConstant() {
+    constantClassMixed = addClassToConstantsTable("Mixed");
+    struct Constant* mixedInitNameAndType = addNameAndTypeToConstantsTable("<init>", "()V");
+    //struct Constant* mixedEquallyNameAndType = addNameAndTypeToConstantsTable("mixedEqually", "(LMixed;LMixed;)B;");
+    struct Constant* mixedPrintNameAndType = addNameAndTypeToConstantsTable("mixedPrint", "(LMixed;)V");
+    struct Constant* mixedSetIntNameAndType = addNameAndTypeToConstantsTable("setInt", "(I)LMixed;");
+    struct Constant* mixedSetBoolNameAndType = addNameAndTypeToConstantsTable("setBool", "(I)LMixed;");
+    struct Constant* mixedSetFloatNameAndType = addNameAndTypeToConstantsTable("setFloat", "(F)LMixed;");
+    struct Constant* mixedSetStringNameAndType = addNameAndTypeToConstantsTable("setString", "(Ljava/lang/String;)LMixed;");
+
+    struct Constant* mixedGetIntNameAndType = addNameAndTypeToConstantsTable("getInt", "()I");
+    struct Constant* mixedGetBoolNameAndType = addNameAndTypeToConstantsTable("getBool", "()I");
+    struct Constant* mixedGetFloatNameAndType = addNameAndTypeToConstantsTable("getFloat", "()F");
+    struct Constant* mixedGetStringNameAndType = addNameAndTypeToConstantsTable("getString", "()Ljava/lang/String;");
+
+    struct Constant* mixedAddNameAndType = addNameAndTypeToConstantsTable("mixedAdd", "(LMixed;LMixed;)LMixed;");
+    struct Constant* mixedSubNameAndType = addNameAndTypeToConstantsTable("mixedSub", "(LMixed;LMixed;)LMixed;");
+    struct Constant* mixedMulNameAndType = addNameAndTypeToConstantsTable("mixedMul", "(LMixed;LMixed;)LMixed;");
+    //struct Constant* mixedDivStringNameAndType = addNameAndTypeToConstantsTable("mixedDiv", "()");
+    struct Constant* mixedEquallyNameAndType = addNameAndTypeToConstantsTable("mixedEqually", "(LMixed;LMixed;)LMixed;");
+    struct Constant* mixedNotEquallyNameAndType = addNameAndTypeToConstantsTable("mixedNotEqually", "(LMixed;LMixed;)LMixed;");
+    struct Constant* mixedNotNameAndType = addNameAndTypeToConstantsTable("mixedNot", "(LMixed;)LMixed;");
+    struct Constant* mixedMoreNameAndType = addNameAndTypeToConstantsTable("mixedMore", "(LMixed;LMixed;)LMixed;");
+    struct Constant* mixedLessNameAndType = addNameAndTypeToConstantsTable("mixedLess", "(LMixed;LMixed;)LMixed;");
+
+    mixedInitMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedInitNameAndType);
+    mixedAddMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedAddNameAndType);
+    //mixedEquallyMethodRef = addConstantMethodRefToConstantTable(constantClassRuntimeLib, mixedEquallyNameAndType);
+    mixedPrintMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedPrintNameAndType);
+
+    mixedSetIntMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedSetIntNameAndType);
+    mixedSetBoolMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedSetBoolNameAndType);
+    mixedSetFloatMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedSetFloatNameAndType);
+    mixedSetStringMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedSetStringNameAndType);
+
+    mixedGetIntMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedGetIntNameAndType);
+    mixedGetBoolMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedGetBoolNameAndType);
+    mixedGetFloatMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedGetFloatNameAndType);
+    mixedGetStringMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedGetStringNameAndType);
+
+    mixedAddMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedAddNameAndType);
+    mixedSubMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedSubNameAndType);
+    mixedMulMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedMulNameAndType);
+    //mixedDivMethodRef = addConstantMethodRefToConstantTable(mixedDivNameAndType, mixedGetIntNameAndType);
+    mixedEquallyMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedEquallyNameAndType);
+    mixedNotEquallyMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedNotEquallyNameAndType);
+    mixedNotMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedNotNameAndType);
+    mixedMoreMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedMoreNameAndType);
+    mixedLessMethodRef = addConstantMethodRefToConstantTable(constantClassMixed, mixedLessNameAndType);
+}
+
+struct Constant* addConstantMethodRefToConstantTable(struct Constant* clazz, struct Constant* nameAndType) {
+    struct Constant* constant = (struct Constant*) malloc(sizeof(struct Constant));
+    constant->const1 = clazz;
+    constant->const2 = nameAndType;
+    constant->id = list_size(constantsTable) + 1;
+    constant->type = CONSTANT_Methodref;
+    list_add(constantsTable, constant);
+    return constant;
+}
+
 

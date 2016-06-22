@@ -6,6 +6,7 @@
 #include "bison.h"
 #include "structs.h"
 #include "printTree.h"
+#include "generationCode.h"
 
 #define PATH_TO_DIR "/home/ivan/qt-creator-projects/scala-compiler/tests/"
 #define COUNT_TEST 1
@@ -19,32 +20,20 @@ bool isOpenFile(FILE *file, char* name) {
     }
 }
 
-char* replace(char* str, char* in, char* out) {
-    char *outStr = (char *)malloc(sizeof(str) + sizeof(out));
-    char *strIn = strstr(str, in);
-    if( strIn != NULL ) {
-        int endSimbol = strIn - str;
-        strncpy(outStr, str, endSimbol);
-        strcat(outStr, out);
-
-    } else
-        strcpy(outStr, str);
-    return outStr;
-}
-
 int main(int argc, char *argv[])
 {
     char files[COUNT_TEST][30] = {
-        //"declaration_vars.txt",
-        "arithmetical_operations.txt"
-        //"logical_operation.txt",
+        "declaration_vars.txt",
+        //"arithmetical_operations.txt"
+        //"logical_operation.txt"
         //"if_statements.txt"
         //"loop.txt",
-        //"functions.txt",
-        //"classes.txt",
-        //"printf.txt"
-        //"objects.txt"
+        //"functions.txt"
         //"match.txt"
+        //"errors_var.txt"
+        //"errors_func.txt"
+        //"errors_match.txt"
+        "errors_if.txt"
     };
     int i = 0;
     for( i = 0; i < COUNT_TEST; i++ ) {
@@ -61,9 +50,19 @@ int main(int argc, char *argv[])
                 printf_root();
                 fclose(writeFile);
             }
-            printf("\nBegin semantic analize\n");
             if( !doSemantic(root) )
-                printf("\nSemantic not complite\n");
+                printf("\n!!!! ERROR: Semantic not complite\n");
+            else {
+                printf("Semantic checking successful\n");
+                char writeFile_path[100] = PATH_TO_DIR;
+                strcat(writeFile_path, replace( files[i], ".txt", "_semantic.xml") );
+                writeFile = fopen(writeFile_path, "wb" );
+                if( isOpenFile(writeFile, files[i]) ) {
+                    printf_root();
+                    fclose(writeFile);
+                    generateCode(root);
+                }
+            }
 
         }
     }

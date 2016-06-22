@@ -17,7 +17,8 @@ SOURCES += main.c \
     collection/stack.c \
     collection/treeset.c \
     collection/treetable.c \
-    func.c
+    func.c \
+    generationCode.c
 
 HEADERS += \
     lexer.h \
@@ -36,7 +37,8 @@ HEADERS += \
     collection/slist.h \
     collection/stack.h \
     collection/treeset.h \
-    collection/treetable.h
+    collection/treetable.h \
+    generationCode.h
 
 DISTFILES += \
     parser.y \

@@ -76,6 +76,7 @@ struct expression {
 struct expression_list {
     struct expression *first;
     struct expression *last;
+    int size;
 };
 
 enum statement_type {
@@ -138,6 +139,7 @@ struct nif_loop {
 struct nargs {
     struct narg *first;
     struct narg *last;
+    int size;
 };
 
 struct narg {
@@ -180,7 +182,8 @@ struct nfunc {
     char *name;
     struct nargs *_args;
     struct expression *return_var;
-    struct statement *body;
+    struct statement_list *body;
+    bool isFunction;
 };
 
 struct nclass {
@@ -201,6 +204,7 @@ struct id_list {
 
 struct id_in_list {
     char* id;
+    int idNum;
     struct id_in_list *next;
 };
 
@@ -236,6 +240,8 @@ enum TypeNames {
 struct SemanticType {
     enum TypeNames typeName;
     int idNum;
+    bool isArray;
+    int constantExpressionNum; //index of constant types integer, float, string in constants table
 };
 
 #endif

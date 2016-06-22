@@ -124,6 +124,7 @@ struct expression *CreateExprPrintln( struct expression_list *expr_list) {
     node->rigth = NULL;
     node->type = println;
     node->expr_list = expr_list;
+    node->left = expr_list->first;
     return node;
 }
 
@@ -152,9 +153,11 @@ struct expression_list *CreateExprList( struct expression_list *expr_list , stru
         expr_list = (struct expression_list *)malloc(sizeof(struct expression_list));
         expr_list->first = expr;
         expr_list->last = expr;
+        expr_list->size = 0;
     } else {
         expr_list->last->next = expr;
         expr_list->last = expr;
+        expr_list->size++;
     }
     return expr_list;
 }
@@ -234,13 +237,34 @@ struct statement* CreateStmtWhile( struct expression *expr, struct statement *st
     return node;
 }
 
+struct statement* CreateStmtProc( char* id, struct nargs *_nargs, struct statement_list *stmt_list) {
+    struct statement *node = (struct statement *)malloc(sizeof(struct statement));
+    struct nfunc *func = (struct nfunc *)malloc(sizeof(struct nfunc));
+    func->body = stmt_list;
+    func->name = id;
+    func->_args = _nargs;
+    func->return_var = NULL;
+    func->isFunction = false;
+    node->to_print_func = func;
+    node->type = NFUNC;
+    return node;
+}
+
 struct statement* CreateStmtFunc( char* id, struct nargs *_nargs, struct statement *stmt, struct expression* return_val) {
     struct statement *node = (struct statement *)malloc(sizeof(struct statement));
     struct nfunc *func = (struct nfunc *)malloc(sizeof(struct nfunc));
-    func->body = stmt;
+    if( stmt->type == STMT_LIST )
+        func->body = stmt->stmt_list;
+    else {
+        func->body = (struct statement_list *)malloc(sizeof(struct statement_list));
+        func->body->first = stmt;
+        func->body->first->next = NULL;
+        func->body->last = stmt;
+    }
     func->name = id;
     func->_args = _nargs;
     func->return_var = return_val;
+    func->isFunction = true;
     node->to_print_func = func;
     node->type = NFUNC;
     return node;
@@ -329,11 +353,13 @@ struct nargs* CreateFuncArgs( struct nargs* _nargs, char* id, struct expression 
         arg->expr = expr;
         _nargs->first = arg;
         _nargs->last  = arg;
+        _nargs->size = 0;
     } else {
         _nargs->last->next  = (struct narg *)malloc(sizeof(struct narg));
         _nargs->last->next->id = id;
         _nargs->last->next->expr = expr;
         _nargs->last = _nargs->last->next;
+        _nargs->size++;
     }
     return _nargs;
 }

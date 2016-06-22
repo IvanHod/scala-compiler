@@ -69,9 +69,9 @@ int yyerror(const char *msg);
 
 %right '='
 %left PLUS_EQUAL MINUS_EQUAL MUL_EQUAL DIV_EQUAL DIV_WITH_REM_EQUAL AND_EQUAL OR_EQUAL
-%left '<' '>' LESS_EQ_THAN MORE_EQ_THAN
 %left AND
 %left OR
+%left '<' '>' LESS_EQ_THAN MORE_EQ_THAN
 %nonassoc ','
 %left '|'
 %left'^'
@@ -181,8 +181,9 @@ int yyerror(const char *msg);
         | FOR '(' ID LEFT_ARROW expr
             if_loop_expr_list ')' stmt  { $$ = CreateStmtFor($3, $5, NULL, $6, $8);         }
         | WHILE '(' expr ')' stmt       { $$ = CreateStmtWhile( $3, $5 );                   }
-        | DEF ID '(' ')' stmt           { $$ = CreateStmtFunc($2, NULL, $5, NULL);          }
-        | DEF ID '(' func_args ')' stmt { $$ = CreateStmtFunc($2, $4, $6, NULL);            }
+        | DEF ID '(' ')' '{'stmt_list'}'{ $$ = CreateStmtProc($2, NULL, $6);                }
+        | DEF ID '(' func_args ')' '{'
+            stmt_list '}'               { $$ = CreateStmtProc($2, $4, $7);                  }
         | DEF ID '(' ')'
             ':' expr '=' stmt           { $$ = CreateStmtFunc($2, NULL, $8, $6);            }
         | DEF ID '(' func_args ')'
@@ -209,14 +210,14 @@ int yyerror(const char *msg);
         | func_args ',' ID ':' expr     { $$ = CreateFuncArgs( $1, $3, $5);                 }
         ;
 
-    decl_var: VAR ID '=' expr ';'           { $$ = CreateDeclVar(NULL, $2, $4);             }
+    decl_var: VAR ID '=' expr ';'       { $$ = CreateDeclVar(NULL, $2, $4);                 }
         | VAR id_list '=' expr ';'      { $$ = CreateDeclVar($2, NULL, $4);                 }
         | VAR ID ':' expr '=' expr ';'  { $$ = CreateDeclVarOfType(NULL, $2, $4, $6);       }
         | VAR id_list ':' expr '='
             expr ';'                    { $$ = CreateDeclVarOfType($2, NULL, $4, $6);       }
         ;
 
-    decl_val: VAL ID '=' expr ';'           { $$ = CreateDeclVal(NULL, $2, $4);                 }
+    decl_val: VAL ID '=' expr ';'           { $$ = CreateDeclVal(NULL, $2, $4);             }
         | VAL id_list '=' expr ';'      { $$ = CreateDeclVal($2, NULL, $4);                 }
         | VAL ID ':' expr '=' expr ';'  { $$ = CreateDeclValOfType(NULL, $2, $4, $6);       }
         | VAL id_list ':' expr '='
